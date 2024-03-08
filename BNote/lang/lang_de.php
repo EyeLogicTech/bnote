@@ -309,6 +309,7 @@ class Translation extends BNoteTranslation {
 			"navigation_Probenphasen" => "Probephasen",
 			"navigation_Finance" => "Finanzen",
 			"navigation_Calendar" => "Kalender",
+			"navigation_Stimmbildung" => "Stimmbildung",
 			"navigation_Passwort" => "Passwort vergessen",
 			"navigation_Warum BNote?" => "Warum BNote?",
 			"navigation_Registrierung" => "Registrierung",
@@ -2486,6 +2487,7 @@ class Translation extends BNoteTranslation {
 			"mod_Tour" => "Tour",
 			"mod_Outfits" => "Outfits",
 			"mod_Stats" => "Auswertungen",
+            "mod_Stimmbildung" => "Stimmbildung",
 			
 			// widgets
 			"addFolder" => "Ordner hinzufügen",
