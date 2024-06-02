@@ -774,7 +774,11 @@ class ProbenView extends CrudRefLocationView {
 			$back = new Link($this->modePrefix() . "history&year=" . $_GET["year"], Lang::txt("ProbenView_viewOptions.back"));
 			$back->addIcon("arrow-left");
 			$back->write();
-			
+
+			$bcParticipation = new Link($this->modePrefix() . "bccheckin&id=" . $_GET["id"], "Bancanta Teilnahme bearbeiten");
+			$bcParticipation->addIcon("bank2");
+			$bcParticipation->write();
+
 			$editParticipation = new Link($this->modePrefix() . "overview&id=" . $_GET["id"] . "&edit=true", Lang::txt("ProbenView_viewOptions.editParticipation"));
 			$editParticipation->addIcon("card-checklist");
 			$editParticipation->write();
@@ -782,9 +786,13 @@ class ProbenView extends CrudRefLocationView {
 		else if(!isset($_GET["tab"]) || $_GET["tab"] == "details") {
 			parent::viewOptions();
 			
+			$bcParticipation = new Link($this->modePrefix() . "bccheckin&id=" . $_GET["id"], "Bancanta Checkin");
+			$bcParticipation->addIcon("bank2");
+			$bcParticipation->write();
+
 			// show a button to send a reminder to all about this rehearsal
 			$remHref = "?mod=" . $this->getData()->getSysdata()->getModuleId("Kommunikation") . "&mode=rehearsalMail&preselect=" . $_GET["id"];
-			
+
 			$reminder = new Link($remHref, Lang::txt("ProbenView_viewOptions.remHref"));
 			$reminder->addIcon("email");
 			$reminder->write();
@@ -946,10 +954,98 @@ class ProbenView extends CrudRefLocationView {
 			$pastRehearsals->write();
 		}
 	}
+
+	function bccheckin() {
+		// title
+		$pdate = $this->getData()->getRehearsalBegin($_GET["id"]);
+		Writing::h2(Lang::txt("ProbenView_view.message_1") . "$pdate" . Lang::txt("ProbenView_view.message_2"));
+		Writing::h3("Bancanta Checkin");
+
+		$lastAction = "";
+		if (array_key_exists("ack", $_GET)) {
+			if ($_GET["ack"] == "yes") {
+				$this->getData()->setParticipation($_GET["cid"], $_GET["id"], 1);
+				$lastAction = " ist nun 'anwesend'.";
+			} else if ($_GET["ack"] == "no") {
+				$this->getData()->setParticipation($_GET["cid"], $_GET["id"], 0);
+				$lastAction = " ist nun 'abwesend'.";
+			} else if ($_GET["ack"] == "dn") {
+				$this->getData()->setParticipation($_GET["cid"], $_GET["id"], 2);
+				$lastAction = " kommt vielleicht noch.";
+			}
+		}
+
+		// participation list
+		list($stimmbildungDirty,$contacts) = $this->getData()->getBancantaRehearsalContacts($_GET["id"]);
+
+		if ($lastAction != "") {
+			for ($i=1; $i<count($contacts); $i++) {
+				if ($contacts[$i]["id"] == $_GET["cid"]) {
+					echo "<div style=\"background-color:#80ff80;\"><b>Letzte &Auml;nderung: ".$contacts[$i]["name"]."$lastAction</b></div>";
+					break;
+				}
+			}
+		}
+
+		$hasStimmbildung = in_array("Stimmbildung", $contacts[0]);
+		if (!$hasStimmbildung) {
+			echo "<div style=\"background-color:yellow;\"><b>Achtung: keine Stimmbildung f&uuml;r diese Probe ausgew&auml;hlt!</b></div>";
+		}
+		else if ($stimmbildungDirty) {
+			echo "<div style=\"background-color:yellow;\"><b>Achtung: Es gibt abwesende Personen, die f&uuml;r Stimmbildung ausgew&auml;hlt sind!</b></div>";
+		}
+
+		array_push($contacts[0], "Checkin (bitte anklicken)");
+
+		for ($i=1; $i<count($contacts); $i++) {
+			$cid = $contacts[$i]["id"];
+			$state = $contacts[$i]["participate"];
+			if ($state == 0) {
+				$contacts[$i]["participate"] = "<b>Nein</b>";
+			}
+			else if ($state == 1) {
+				$contacts[$i]["participate"] = "<b>Ja</b>";
+			}
+			else {
+				$contacts[$i]["participate"] = "<b>&nbsp;</b>";
+			}
+			$contacts[$i]["edit"] = "";
+			if ($state != 1) {
+				$contacts[$i]["edit"] = "<a class=\"btn btn-secondary bnote-opt-btn ms-2 mb-2\" href=\"".$this->modePrefix()."bccheckin&id=".$_GET["id"]."&cid=$cid&ack=yes\">Gesund und anwesend</a>";
+			}
+			if ($state != 0) {
+				$contacts[$i]["edit"] = $contacts[$i]["edit"] ."<a class=\"btn btn-secondary bnote-opt-btn ms-2 mb-2\" href=\"".$this->modePrefix()."bccheckin&id=".$_GET["id"]."&cid=$cid&ack=no\">Nicht anwesend</a>";
+			}
+			if ($state == 0 || $state == 1) {
+				$contacts[$i]["edit"] = $contacts[$i]["edit"]."<a class=\"btn btn-secondary bnote-opt-btn ms-2 mb-2\" href=\"".$this->modePrefix()."bccheckin&id=".$_GET["id"]."&cid=$cid&ack=dn\">Kommt vielleicht noch</a>";
+			}
+		}
+		
+		$table = new Table($contacts);
+		$table->removeColumn("id");
+		$table->showFilter(true);
+		$table->write();
+	}
 	
+	function bccheckinOptions() {
+		$this->backToViewButton($_GET["id"]);
+		$seriesEdit = new Link($this->modePrefix() . "close&id=" . $_GET["id"], "Anmeldung beenden");
+		$seriesEdit->addIcon("x-circle");
+		$seriesEdit->write();
+	}
+
+	function close() {
+		$this->getData()->closeRehearsalContacts($_GET["id"]);
+
+		$this->bccheckin();
+	}
+
+	function closeOptions() {
+		$this->bccheckinOptions();
+	}
+
 	private function isReadOnlyView() {
 		return (isset($_GET["readonly"]) && $_GET["readonly"] == "true");
 	}
 }
-
 ?>
