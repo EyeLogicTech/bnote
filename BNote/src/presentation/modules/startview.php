@@ -214,7 +214,7 @@ class StartView extends CrudRefLocationView {
 					$partClass = "start_box_participation_yes";
 					break;
 				case 2:
-					$partClass = "start_box_participation_maybe";
+					$partClass = "start_box_participation_yes";
 					break;
 				default:
 					$partClass = "start_box_participation_unknown";
@@ -318,7 +318,7 @@ class StartView extends CrudRefLocationView {
 		}
 		
 		$dataview->write();
-		
+
 		// participants
 		Writing::h5(Lang::txt("StartView_rehearsalParticipants.participantsOfRehearsal", array(Data::convertDateFromDb($rehearsal["begin"]))), "mt-3");
 		
