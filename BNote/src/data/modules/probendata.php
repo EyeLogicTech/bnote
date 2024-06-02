@@ -363,7 +363,130 @@ class ProbenData extends AbstractLocationData {
 					ORDER BY i.rank, name";
 		return $this->database->getSelection($query, array(array("i", $rid)));
 	}
-	
+
+	public function setParticipation($uid, $rid, $value) {
+		$query = "SELECT * FROM rehearsal_user WHERE user = $uid and rehearsal=$rid";
+		$val = $this->database->getSelection($query);
+		if (count($val) == 1) { // already existent
+				$update_query = "INSERT INTO rehearsal_user (rehearsal, user, participate, replyon) VALUES (?,?,?, NOW())";
+				$this->database->prepStatement($update_query, array(
+						array("i", $rid),
+						array("i", $uid),
+						array("i", $value)
+				));
+		} else {
+			$query = "UPDATE rehearsal_user
+						SET participate=$value
+						WHERE user = $uid and rehearsal=$rid";
+			$this->database->execute($query);
+		}
+	}
+
+    function getSlotId() {
+        $slotIdTable = $this->database->getSelection("SELECT Id FROM customfield WHERE techname = 'stimmbildung_slot'");
+        if (count($slotIdTable) < 2) {
+            echo "Error: missing customfield stimmbildung_slot";
+            return -1;
+        }
+        return $slotIdTable[1]["Id"];
+    }
+
+	public function getBancantaRehearsalContacts($rid) {
+		$stimmbildungDirty = False;
+		$query = "SELECT c.id, CONCAT(c.surname, ', ', c.name) as name, i.name as instrument
+					FROM contact c
+						JOIN rehearsal_contact rc ON rc.contact = c.id
+						LEFT OUTER JOIN instrument i ON c.instrument = i.id
+					WHERE rc.rehearsal = ?
+					ORDER BY i.rank, name";
+		$val = $this->database->getSelection($query, array(array("i", $rid)));
+
+		$query2 = "SELECT user,participate
+					FROM rehearsal_user ru
+					WHERE ru.rehearsal = ?";
+		$val2 = $this->database->getSelection($query2, array(array("i", $rid)));
+
+
+        $query3 = "select intval from stimmbildung_config where name='rehearsal'";
+		$val3 = $this->database->getSelection($query3);
+        $stimmbildung_rid = $val3[1]["intval"];
+
+		$map = array();
+		foreach($val2 as $user => $participate) {
+			if (array_key_exists("user", $participate)) {
+				$map[$participate["user"]] = $participate["participate"];
+			}
+		}
+
+		array_push($val[0], "Anwesend");
+		for ($i=1; $i<count($val); $i++) {
+			if (array_key_exists($val[$i]["id"], $map)) {
+				$val[$i]["participate"] = $map[$val[$i]["id"]];
+			}
+			else {
+				$val[$i]["participate"] = 2;
+			}
+		}
+
+		if ($stimmbildung_rid == $rid) {
+			array_push($val[0], "Stimmbildung");
+			$query5 = "SELECT * FROM stimmbildung_slots";
+			$slotNames = $this->database->getSelection($query5);
+
+			$customFieldId = $this->getSlotId();
+			$query4 = "select oid,intval from customfield_value where customfield=$customFieldId";
+			$val4 = $this->database->getSelection($query4);
+			$map2 = array();
+			foreach($val4 as $user => $slot) {
+				if (array_key_exists("oid", $slot)) {
+					$map2[$slot["oid"]] = $slot["intval"];
+				}
+			}
+
+			for ($i=1; $i<count($val); $i++) {
+				$uid = $val[$i]["id"];
+				$slot = $map2[$uid];
+				if ($slot > 0 && $slot < count($slotNames)) {
+					if ($val[$i]["participate"] == 0) {
+						$val[$i]["stimmbildung"] = "<b style=\"color:red;\">".$slotNames[$slot]["name"]."</b>";
+						$stimmbildungDirty = True;
+					} else {
+						$val[$i]["stimmbildung"] = "<b>".$slotNames[$slot]["name"]."</b>";
+					}
+				}
+				else {
+					$val[$i]["stimmbildung"] = "-";
+				}
+			}
+		}
+
+		return array($stimmbildungDirty, $val);
+	}
+
+
+	public function closeRehearsalContacts($rid) {
+		$query = "SELECT c.id FROM contact c
+					JOIN rehearsal_contact rc ON rc.contact = c.id
+					WHERE rc.rehearsal = ?";
+		$val = $this->database->getSelection($query, array(array("i", $rid)));
+
+		$query2 = "SELECT user,participate FROM rehearsal_user ru WHERE ru.rehearsal = ?";
+		$val2 = $this->database->getSelection($query2, array(array("i", $rid)));
+
+		$map = array();
+		foreach($val2 as $user => $participate) {
+			if (array_key_exists("user", $participate)) {
+				$map[$participate["user"]] = $participate["participate"];
+			}
+		}
+
+		for ($i=1; $i<count($val); $i++) {
+			if (!array_key_exists($val[$i]["id"], $map) || $map[$val[$i]["id"]] == 2) {
+				$this->setParticipation($val[$i]["id"], $rid, 0);
+			}
+		}
+	}
+
 	public function getRehearsalsPhases($rid) {
 		$query = "SELECT p.* ";
 		$query .= "FROM rehearsalphase p JOIN rehearsalphase_rehearsal pr ON pr.rehearsalphase = p.id ";
