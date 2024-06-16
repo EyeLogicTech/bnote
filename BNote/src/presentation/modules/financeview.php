@@ -87,6 +87,10 @@ class FinanceView extends CrudView {
 		$multi_reporting = new Link($this->modePrefix() . "multireport", Lang::txt("FinanceView_startOptions.multireporting"));
 		$multi_reporting->addIcon("clipboard-data");
 		$multi_reporting->write();
+
+		$einzug = new Link($this->modePrefix() . "einzugliste", "Einzugliste");
+		$einzug->addIcon("list-columns-reverse");
+		$einzug->write();
 	}
 	
 	function viewTitle() {
@@ -449,6 +453,46 @@ class FinanceView extends CrudView {
 		$print = new Link("javascript:print()", Lang::txt("FinanceView_multireportResultOptions.print"));
 		$print->addIcon("printer");
 		$print->write();
+	}
+
+	function format($data) {
+		$e = array();
+		for ($i=1; $i<count($data); $i++) {
+			$name = $data[$i]["NAME"];
+			$iban = $data[$i]["IBAN"];
+			$betrag = $data[$i]["BETRAG"];
+			$referenz = $data[$i]["REFERENZ"];
+			$mandatVom = $data[$i]["MANDAT_VOM"];
+			$e[] = "$name, $iban, $betrag, $referenz, $mandatVom";
+		}
+		return implode("\\n", $e);
+	}
+
+	function einzugliste() {
+		Writing::h1("Einzugliste");
+		$data = $this->getData()->getEinzugListe();
+		$dataDownload = $this->getData()->getEinzugListeDownload();
+		foreach ($dataDownload as &$d) {
+			$d = implode(',', $d);
+		}
+		$dataDownload = implode('\n', $dataDownload);
+		echo("<button onclick = \"downloadFile()\"> Herunterladen </button>\n");
+		echo("   <script>\n");
+		echo("      const downloadFile = () => {\n");
+		echo("         const link = document.createElement(\"a\");\n");
+		echo("         const content = \"$dataDownload\";\n");
+		echo("         const file = new Blob([content], { type: 'text/plain' });\n");
+		echo("         link.href = URL.createObjectURL(file);\n");
+		echo("         link.download = \"bancanta-einzug.csv\";\n");
+		echo("         link.click();\n");
+		echo("         URL.revokeObjectURL(link.href);\n");
+		echo("      };\n");
+		echo("   </script>\n");
+		
+		$table = new Table($data);
+		#$table->removeColumn("id");
+		$table->showFilter(true);
+		$table->write();
 	}
 }
 

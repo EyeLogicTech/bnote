@@ -223,6 +223,18 @@ class FinanceData extends AbstractData {
 	public function getAccountName($aid) {
 		return $this->database->colValue("SELECT name FROM account WHERE id = ?", "name", array(array("i", $aid)));
 	}
+
+	function getEinzugListe() {
+		$query = "select * from sepa_liste_bnote";
+		$result = $this->database->getSelection($query);
+		return $result;
+	}
+
+	function getEinzugListeDownload() {
+		$query = "select * from sepa_liste_gls";
+		$result = $this->database->getSelection($query);
+		return $result;
+	}
 }
 
 ?>
