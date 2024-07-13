@@ -50,7 +50,6 @@ class ParticipationWidget implements iWriteable {
 				</div>
 				<div class="col-12">
 					<input type="radio" class="btn-check" name="participation" value="1" id="<?php echo $fieldId . "_yes"; ?>" autocomplete="off" <?php echo $this->participation == 1 ? "checked" : ""; ?>/>
-					<label class="btn btn-outline-success participation_button" for="<?php echo $fieldId . "_yes"; ?>"><i class="bi-check"></i></label>
 					<?php
 					if($system_data->getDynamicConfigParameter("allow_participation_maybe") == 1) {
 					?>
@@ -61,9 +60,6 @@ class ParticipationWidget implements iWriteable {
 					?>
 					<input type="radio" class="btn-check" name="participation" value="0" id="<?php echo $fieldId . "_no"; ?>" autocomplete="off" <?php echo $this->participation == 0 ? "checked" : ""; ?>/>
 					<label class="btn btn-outline-danger participation_button" for="<?php echo $fieldId . "_no"; ?>"><i class="bi-x"></i></label>
-				</div>
-				<div class="col-12">
-					<input type="text" name="reason" placeholder="<?php echo Lang::txt("ParticipationWidget_write.reason"); ?>" class="form-control" value="<?php echo $this->reason; ?>" />
 				</div>
 				<div class="col-12">
 					<input type="submit" class="btn btn-primary" value="<?php echo Lang::txt("ParticipationWidget_write.save"); ?>" />
