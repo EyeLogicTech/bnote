@@ -41,41 +41,35 @@ class MitspielerData extends AbstractLocationData {
 				"c.id",
 				"c.name",
 				"c.surname",
-				"CONCAT(c.name, ' ', c.surname) as fullname",
-				"nickname",
 				"IF(share_email = 1, email, '') as email",
-				"web",
-				"i.id as instrument",
 				"i.name as instrumentname",
-				"notes",
 				
 				// address fields
 				"IF(share_address = 1, a.street, '') as street",
 				"IF(share_address = 1, a.zip, '') as zip",
 				"IF(share_address = 1, a.city, '') as city",
-				"IF(share_address = 1, a.state, '') as state",
-				"IF(share_address = 1, a.country, '') as country",
 				
 				// phone fields
-				"IF(share_phones = 1, phone, '') as phone",
 				"IF(share_phones = 1, mobile, '') as mobile",
-				"IF(share_phones = 1, fax, '') as fax",
-				"IF(share_phones = 1, business, '') as business",
 				
 				// birthday field
 				"IF(share_birthday = 1, birthday, '') as birthday"
 		);
 		$fieldsStr = join(",", $fields);
-		$order = "ORDER BY fullname, i.rank";
+		$order = "ORDER BY c.surname, i.rank";
 		
 		// Super User or Admin
-		if($this->getSysdata()->isUserSuperUser($uid) || $this->getSysdata()->isUserMemberGroup(1, $uid)) {
-			$query = "SELECT $fieldsStr FROM contact c
+		//if($this->getSysdata()->isUserSuperUser($uid) || $this->getSysdata()->isUserMemberGroup(1, $uid)) {
+		if (true) { // due to a bug, the querys below do not work, hence use admin query for all members
+			$query = "SELECT $fieldsStr FROM
+					  contact c
 					  JOIN instrument i ON c.instrument = i.id
 					  LEFT OUTER JOIN address a ON c.address = a.id
 					  $order";
 			$contacts = $this->database->getSelection($query);
-			return $this->appendCustomDataToSelection("c", $contacts);
+			$contacts[0] = array("Id", "Vorname", "Nachname", "Email", "Stimme", "Strasse", "PLZ", "Stadt", "Telefon", "Geburtstag");
+			return $contacts;
+			//return $this->appendCustomDataToSelection("c", $contacts);
 		}
 		
 		$contacts = array();
