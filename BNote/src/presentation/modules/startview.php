@@ -309,7 +309,7 @@ class StartView extends CrudRefLocationView {
 		$dataview->write();
 
 		// participants
-        if (False) { // deactivate Participant list
+        if (True) { // deactivate Participant list
 		    Writing::h5(Lang::txt("StartView_rehearsalParticipants.participantsOfRehearsal", array(Data::convertDateFromDb(    $rehearsal["begin"]))), "mt-3");
 		
 		    $parts = $this->getData()->getRehearsalParticipants($oid);

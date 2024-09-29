@@ -2032,7 +2032,7 @@ class Translation extends BNoteTranslation {
 			"StartView_viewProgram.title" => "Titel",
 			"StartView_viewProgram.composer" => "Komponist/Arrangeuer",
 			"StartView_viewProgram.notes" => "Notizen",
-			"StartView_rehearsalParticipants.participantsOfRehearsal" => "Teilnehmer der Probe am %p Uhr",
+			"StartView_rehearsalParticipants.participantsOfRehearsal" => "Absagen der Probe am %p Uhr",
 			"StartView_rehearsalParticipants.name" => "Vorname",
 			"StartView_rehearsalParticipants.surname" => "Nachname",
 			"StartView_rehearsalParticipants.nickname" => "Spitzname",
