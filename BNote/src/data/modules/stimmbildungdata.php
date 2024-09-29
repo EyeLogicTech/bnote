@@ -82,12 +82,6 @@ class StimmbildungData extends AbstractData
             "where cg.group=$groupId ".
             "order by instrument,fullname";
         $groupContacts = $this->database->getSelection($query);
-        for ($i=1; $i<count($groupContacts); $i++) {
-            $x = strrpos($groupContacts[$i]["fullname"], " ");
-            if ($x > 0) {
-                $groupContacts[$i]["fullname"] = substr($groupContacts[$i]["fullname"],0,$x+2).".";
-            }
-        }
 
         return $groupContacts;
     }
