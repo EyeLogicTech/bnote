@@ -71,7 +71,6 @@ class ParticipationWidget implements iWriteable {
 	}
 
 	public function writeNoYesButton() {
-echo "writeNoYesButton()";
 		$fieldId = "participation" . $this->fieldIdSuffix;
 		global $system_data;
 		?>
