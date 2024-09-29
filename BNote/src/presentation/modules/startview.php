@@ -129,7 +129,7 @@ class StartView extends CrudRefLocationView {
 				<div class="start_box_heading p-2 mb-1"><?php echo Lang::txt("StartView_start.Inbox"); ?></div>
 				<?php
 				$newsActive = (!isset($_GET["otype"]) || !isset($_GET["oid"]) || ($_GET["otype"] == "N"));
-				$this->writeCard(Lang::txt("StartView_start_box.heading"), substr($news, 0, 50) . "...", $this->modePrefix() . "start&otype=N", $newsActive);
+				$this->writeCard(Lang::txt("StartView_start_box.heading"), substr($news, 0, 50) . "...", $this->modePrefix() . "start&otype=N", $newsActive, NULL, NULL, NULL, $_GET["otype"] == "R");
 				
 				$sortedInboxItems = array_column($inboxItems, 'replyUntil');
 				array_multisort($sortedInboxItems, SORT_ASC, $inboxItems);
@@ -139,7 +139,7 @@ class StartView extends CrudRefLocationView {
 					$active = (isset($_GET["otype"]) && isset($_GET["oid"]) && $_GET["otype"] == $item["otype"] && $_GET["oid"] == $item["oid"]);
 					$part = isset($item["participation"]) ? $item["participation"] : NULL;
 					$status = isset($item["status"]) ? $item["status"] : NULL;
-					$this->writeCard($item["title"], $item["preview"], $href, $active, $item["due"], $part, $status);
+					$this->writeCard($item["title"], $item["preview"], $href, $active, $item["due"], $part, $status, $_GET["otype"] == "R");
 				}
 				?>
 			</div>
@@ -187,7 +187,7 @@ class StartView extends CrudRefLocationView {
 		}
 	}
 	
-	private function writeCard($title, $preview, $href, $active, $dueDate=NULL, $userParticipation=NULL, $status=NULL) {
+	private function writeCard($title, $preview, $href, $active, $dueDate=NULL, $userParticipation=NULL, $status=NULL, $noYesButton=False) {
 		$partClass = "";
 		if($userParticipation != NULL || is_int($userParticipation)) {
 			switch($userParticipation) {
@@ -198,7 +198,12 @@ class StartView extends CrudRefLocationView {
 					$partClass = "start_box_participation_yes";
 					break;
 				case 2:
-					$partClass = "start_box_participation_yes";
+                    if ($noYesButton) {
+					    $partClass = "start_box_participation_yes";
+                    }
+                    else {
+                        $partClass = "start_box_participation_maybe";
+                    }
 					break;
 				default:
 					$partClass = "start_box_participation_unknown";
@@ -253,7 +258,7 @@ class StartView extends CrudRefLocationView {
 		$partLink = $this->modePrefix() . "saveParticipation&otype=R&oid=$oid";
 		$userParticipation = $this->getData()->doesParticipateInRehearsal($oid);
 		$partWidget = new ParticipationWidget($partLink, $userParticipation["participate"], $userParticipation["reason"]);
-		$partWidget->write();
+		$partWidget->writeNoYesButton();
 		
 		Writing::h5(Lang::txt("StartView_startViewR.info"), "mt-3");
 		
