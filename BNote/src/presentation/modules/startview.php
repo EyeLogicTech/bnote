@@ -309,15 +309,17 @@ class StartView extends CrudRefLocationView {
 		$dataview->write();
 
 		// participants
-		Writing::h5(Lang::txt("StartView_rehearsalParticipants.participantsOfRehearsal", array(Data::convertDateFromDb($rehearsal["begin"]))), "mt-3");
+        if (False) { // deactivate Participant list
+		    Writing::h5(Lang::txt("StartView_rehearsalParticipants.participantsOfRehearsal", array(Data::convertDateFromDb(    $rehearsal["begin"]))), "mt-3");
 		
-		$parts = $this->getData()->getRehearsalParticipants($oid);
-		$table = new Table($parts);
-		$table->renameHeader("name", Lang::txt("StartView_rehearsalParticipants.name"));
-		$table->renameHeader("surname", Lang::txt("StartView_rehearsalParticipants.surname"));
-		$table->renameHeader("nickname", Lang::txt("StartView_rehearsalParticipants.nickname"));
-		$table->removeColumn("instrumentrank");
-		$table->write();
+		    $parts = $this->getData()->getRehearsalParticipants($oid);
+		    $table = new Table($parts);
+		    $table->renameHeader("name", Lang::txt("StartView_rehearsalParticipants.name"));
+		    $table->renameHeader("surname", Lang::txt("StartView_rehearsalParticipants.surname"));
+		    $table->renameHeader("nickname", Lang::txt("StartView_rehearsalParticipants.nickname"));
+		    $table->removeColumn("instrumentrank");
+		    $table->write();
+        }
 	}
 	
 	function startViewC() {
