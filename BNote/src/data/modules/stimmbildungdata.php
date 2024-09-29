@@ -97,11 +97,11 @@ class StimmbildungData extends AbstractData
         if ($rid < 0) {
             return array();
         }
-        $query = "select distinct user, participate from rehearsal_user where rehearsal=$rid";
+        $query = "select distinct contact,participate from rehearsal_user ru JOIN user u ON ru.user = u.id where rehearsal=$rid";
         $x = $this->database->getSelection($query);
         $res = array();
         for ($i=1; $i<count($x); $i++) {
-            $res[$x[$i]["user"]] = $x[$i]["participate"];
+            $res[$x[$i]["contact"]] = $x[$i]["participate"];
         }
         return $res;
     }
