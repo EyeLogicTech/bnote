@@ -471,6 +471,11 @@ class KonzerteView extends CrudRefLocationView {
 	}
 	
 	public function editParticipation() {
+		Writing::h3(Lang::txt("KonzerteView_editParticipation.heading", array($gig["title"])));
+		echo "Wegen eines internen Bugs ist dieser Knopf vorr&uuml;bergehend deaktiviert. Wir arbeiten daran....";
+	}
+
+	public function editParticipation_Buggy() {
 		$gig = $this->getData()->findByIdNoRef($_GET["id"]);
 		Writing::h3(Lang::txt("KonzerteView_editParticipation.heading", array($gig["title"])));
 		$participation = $this->getData()->getFullParticipation($_GET["id"]);
