@@ -27,7 +27,7 @@ class KommunikationView extends AbstractView {
 		
 		// General mail form
 		$form = $this->createMailForm($this->modePrefix() . "groupmail");
-		$form->addElement(Lang::txt("KommunikationView_start.includeReceivers"), new Field("inclreceivers", False, FieldType::BOOLEAN));
+		$form->addElement(Lang::txt("KommunikationView_start.includeReceivers"), new Field("inclreceivers", True, FieldType::BOOLEAN));
 		$form->write();
 	}
 	
