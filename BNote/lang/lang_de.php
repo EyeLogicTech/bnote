@@ -905,7 +905,7 @@ class Translation extends BNoteTranslation {
 			"KommunikationView_concertMail.concert" => "Auftritt",
 			"KommunikationView_voteMail.Title" => "Abstimmungsbenachrichtigung",
 			"KommunikationView_voteMail.Vote" => "Abstimmung",
-			"KommunikationView_createMailForm.recipient" => "Empfänger",
+			"KommunikationView_createMailForm.recipient" => "EMPFÄNGER (Hinweis: zur Empfängergruppe |Mitglieder| gehören die aktiv Singenden und Tobias, Oliver, Theo)",
 			"KommunikationView_createMailForm.subject" => "Betreff",
 			"KommunikationView_createMailForm.Message" => "Nachricht",
 			"KommunikationView_createMailForm.Submit" => "SENDEN",
@@ -1351,11 +1351,9 @@ class Translation extends BNoteTranslation {
 			// LoginView ********* to finish **********
 			"LoginView_login.message_1" => "Bitte melde dich an um BNote zu nutzen. Wenn du noch kein
 				Konto deiner Band hast, dann <a href=\"?mod=registration\">registriere</a> dich jetzt.",
-			"LoginView_login.message_2" => "Wenn du dich wiederholt nicht anmelden kannst,
-				dann ist dein Konto gegebenenfalls noch nicht freigeschalten. Bitte
-				versuche es zu einem späteren Zeitpunkt noch einmal.",	
+			"LoginView_login.message_2" => "Wenn du dein Passwort vergessen hast, klicke im Menue auf Passwort vergessen.",	
 			"LoginView_login.Form" => "Anmeldung",
-			"LoginView_login.login" => "Benutzername oder E-Mail-Adresse",
+			"LoginView_login.login" => "Benutzername",
 			"LoginView_login.password" => "Passwort",
 			"LoginView_login.fwd_header" => "Geschützter Zugriff",
 			"LoginView_login.fwd_message" => "Du versuchst auf eine geschützte Seite zuzugreifen. Bitte melde dich mit einem priviligierten Benutzerkonto an.",
@@ -2416,7 +2414,7 @@ class Translation extends BNoteTranslation {
 			"deleted_entity" => "%p gelöscht",
 			"user" => "Benutzer",
 			"date" => "Datum",
-			"mail_footerText" => "Diese E-Mail wurde automatisch von BNote versandt:",
+			"mail_footerText" => "Alle Informationen findest du auf dem ",
 			"error" => "Fehler",
 			"street" => "Straße",
 			"city" => "Stadt",
