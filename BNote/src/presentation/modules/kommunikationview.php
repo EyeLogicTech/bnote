@@ -172,10 +172,16 @@ class KommunikationView extends AbstractView {
 	
 	private function createMailForm($action, $message = "", $showGroups = true) {
 		$form = new Form("", $action . "&sub=send");
-		
 		// for some mails no receipients are needed, take the ones from the event itself
 		if($showGroups) {
-			$gs = new GroupSelector($this->getData()->adp()->getGroups(true, true), array(), "group");
+			$groups = $this->getData()->adp()->getGroups(true, true);
+			$selectedGroups = array();
+			foreach ($groups as $g) {
+				if ($g["name"] == "Mitglieder") {
+					array_push($selectedGroups, $g["id"]);
+				}
+			}
+			$gs = new GroupSelector($groups, array(2), "group");
 			$gs->setNameColumn("name_member");
 			$form->addElement(Lang::txt("KommunikationView_createMailForm.recipient"), $gs);
 		}
