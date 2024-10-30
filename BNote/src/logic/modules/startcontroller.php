@@ -56,6 +56,10 @@ class StartController extends DefaultController {
 		// get contacts to notify
 		$contacts = $this->getData()->getContactsForObject($_GET["otype"], $_GET["oid"]);
 		
+		// in Bancanta, mail notifications are disabled until the bug is fixed that the mail
+		// is sent to all people, event those who configured to not receive mails
+		return;
+
 		// dont notify anyone if nobody has to be notified
 		if($contacts == null) return;
 		else if(count($contacts) <= 1) return;
