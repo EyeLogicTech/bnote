@@ -2422,7 +2422,7 @@ class Translation extends BNoteTranslation {
 			"deleted_entity" => "%p deleted",
 			"user" => "User",
 			"date" => "Date",
-			"mail_footerText" => "This e-mail was automatically sent by BNote:",
+			"mail_footerText" => "All information available on",
 			"error" => "Error",
 			"street" => "Street",
 			"city" => "City",
