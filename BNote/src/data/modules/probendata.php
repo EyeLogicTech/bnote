@@ -393,7 +393,7 @@ class ProbenData extends AbstractLocationData {
 
 	public function getBancantaRehearsalContacts($rid) {
 		$stimmbildungDirty = False;
-		$query = "SELECT c.id, CONCAT(c.surname, ', ', c.name) as name, i.name as instrument
+		$query = "SELECT c.id, CONCAT(c.name, ' ', c.surname) as name, i.name as instrument
 					FROM contact c
 						JOIN rehearsal_contact rc ON rc.contact = c.id
 						LEFT OUTER JOIN instrument i ON c.instrument = i.id
