@@ -820,21 +820,24 @@ class ProbenView extends CrudRefLocationView {
 	function overview() {
 		if(isset($_GET["edit"])) {
 			if($_GET["edit"] == "save") {
-				$this->getData()->updateParticipations();
+				echo "Editieren von Probenteilnahmen deaktiviert.";
+				#$this->getData()->updateParticipations();
 			}
 			elseif($_GET["edit"] == "true") {
-				$single = "";
-				if(isset($_GET["id"])) {
-					$single = "&id=" . $_GET["id"];
-				}
+				echo "<P><B>Wegen eines internen Bugs ist dieser Knopf vorr&uuml;bergehend deaktiviert, das Editieren von Teilnahmen nicht m&ouml;glich. Wir arbeiten daran....</B></P>";
+
+				#$single = "";
+				#if(isset($_GET["id"])) {
+				#	$single = "&id=" . $_GET["id"];
+				#}
 				
-				echo '<form method="POST" action="' . $this->modePrefix() . "overview$single&edit=save" . '" style="margin-top: 0px;">';
+				#echo '<form method="POST" action="' . $this->modePrefix() . "overview$single&edit=save" . '" style="margin-top: 0px;">';
 				
-				$save = new Link($this->modePrefix() . "overview&edit=save$single", Lang::txt("ProbenView_overviewEdit.save"));
-				$save->isSubmitButton();
-				$save->write();
-				
-				Writing::p(Lang::txt("ProbenView_overview.edit_legend_message"));
+				#$save = new Link($this->modePrefix() . "overview&edit=save$single", Lang::txt("ProbenView_overviewEdit.save"));
+				#$save->isSubmitButton();
+				#$save->write();
+
+				#Writing::p(Lang::txt("ProbenView_overview.edit_legend_message"));
 			}
 		}
 		
@@ -886,29 +889,29 @@ class ProbenView extends CrudRefLocationView {
 							?>
 							<div class="player_participation_line">
 								<?php 
-								if(isset($_GET["edit"]) && $_GET["edit"] == "true") {
-									if(isset($participant["contact"])) {
-										$cid = $participant["contact"];
-									}
-									else {
-										$cid = $participant["contact_id"];
-									}
-									$dd = new Dropdown("part_r" . $rehearsal['id'] . "_c" . $cid);
-									$dd->addOption("?", -1);
-									$dd->addOption("-", 0);
-									$dd->addOption("✓", 1);
-									if($this->getData()->getSysdata()->getDynamicConfigParameter("allow_participation_maybe") != 0) {
-										$dd->addOption("~", 2);
-									}
-									$dd->setSelected($participant['participate']);
-									$dd->setStyleClass("participationQuickSelector");
-									echo $dd->write();
-								}
-								else {
+#								if(isset($_GET["edit"]) && $_GET["edit"] == "true") {
+#									if(isset($participant["contact"])) {
+#										$cid = $participant["contact"];
+#									}
+#									else {
+#										$cid = $participant["contact_id"];
+#									}
+#									$dd = new Dropdown("part_r" . $rehearsal['id'] . "_c" . $cid);
+#									$dd->addOption("?", -1);
+#									$dd->addOption("-", 0);
+#									$dd->addOption("✓", 1);
+#									if($this->getData()->getSysdata()->getDynamicConfigParameter("allow_participation_maybe") != 0) {
+#										$dd->addOption("~", 2);
+#									}
+#									$dd->setSelected($participant['participate']);
+#									$dd->setStyleClass("participationQuickSelector");
+#									echo $dd->write();
+#								}
+#								else {
 								?>
 								<i class="bi-<?php echo $icon; ?>"></i>
 								<?php 
-								}
+#								}
 								?>
 								<span><?php echo $participant['contactname']; ?></span>
 							</div>
