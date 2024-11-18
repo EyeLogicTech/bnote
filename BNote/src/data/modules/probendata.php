@@ -393,9 +393,10 @@ class ProbenData extends AbstractLocationData {
 
 	public function getBancantaRehearsalContacts($rid) {
 		$stimmbildungDirty = False;
-		$query = "SELECT c.id, CONCAT(c.name, ' ', c.surname) as name, i.name as instrument
+		$query = "SELECT u.id, CONCAT(c.name, ' ', c.surname) as name, i.name as instrument
 					FROM contact c
 						JOIN rehearsal_contact rc ON rc.contact = c.id
+						JOIN user u ON u.contact = c.id
 						LEFT OUTER JOIN instrument i ON c.instrument = i.id
 					WHERE rc.rehearsal = ?
 					ORDER BY i.rank, name";
@@ -411,7 +412,7 @@ class ProbenData extends AbstractLocationData {
 		$val3 = $this->database->getSelection($query3);
         $stimmbildung_rid = $val3[1]["intval"];
 
-		$map = array();
+		$map = array();  # user-id -> participate (-1 (?), 0 (no), 1 (yes), 2 (wants to))
 		foreach($val2 as $user => $participate) {
 			if (array_key_exists("user", $participate)) {
 				$map[$participate["user"]] = $participate["participate"];
@@ -434,12 +435,14 @@ class ProbenData extends AbstractLocationData {
 			$slotNames = $this->database->getSelection($query5);
 
 			$customFieldId = $this->getSlotId();
-			$query4 = "select oid,intval from customfield_value where customfield=$customFieldId";
+			$query4 = "SELECT u.id,cfv.intval FROM `customfield_value` cfv
+							join user u on u.contact = cfv.oid
+						where cfv.customfield=$customFieldId";
 			$val4 = $this->database->getSelection($query4);
-			$map2 = array();
+			$map2 = array();  # user-id -> stimmbildung_slot
 			foreach($val4 as $user => $slot) {
-				if (array_key_exists("oid", $slot)) {
-					$map2[$slot["oid"]] = $slot["intval"];
+				if (array_key_exists("id", $slot)) {
+					$map2[$slot["id"]] = $slot["intval"];
 				}
 			}
 
@@ -465,15 +468,16 @@ class ProbenData extends AbstractLocationData {
 
 
 	public function closeRehearsalContacts($rid) {
-		$query = "SELECT c.id FROM contact c
+		$query = "SELECT u.id FROM contact c
 					JOIN rehearsal_contact rc ON rc.contact = c.id
+					JOIN user u ON u.contact = c.id
 					WHERE rc.rehearsal = ?";
-		$val = $this->database->getSelection($query, array(array("i", $rid)));
+		$val = $this->database->getSelection($query, array(array("i", $rid)));  # contact-id
 
 		$query2 = "SELECT user,participate FROM rehearsal_user ru WHERE ru.rehearsal = ?";
 		$val2 = $this->database->getSelection($query2, array(array("i", $rid)));
 
-		$map = array();
+		$map = array();  # user-id -> participation
 		foreach($val2 as $user => $participate) {
 			if (array_key_exists("user", $participate)) {
 				$map[$participate["user"]] = $participate["participate"];
@@ -481,7 +485,7 @@ class ProbenData extends AbstractLocationData {
 		}
 
 		for ($i=1; $i<count($val); $i++) {
-			if (!array_key_exists($val[$i]["id"], $map) || $map[$val[$i]["id"]] == 2) {
+			if (!array_key_exists($val[$i]["id"], $map) || $map[$val[$i]["id"]] == 2 || $map[$val[$i]["id"]] == -1) {
 				$this->setParticipation($val[$i]["id"], $rid, 0);
 			}
 		}
