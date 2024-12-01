@@ -150,7 +150,7 @@ class Form implements iWriteable {
 	 * @param boolean $urlencodedNameColumns
 	 * 			Set to true if the name column needs to be urldecoded
 	 */
-	public function setForeign($field, $table, $idcolumn, $namecolumns, $selectedid, $urlencodedNameColumns=FALSE) {
+	public function setForeign($field, $table, $idcolumn, $namecolumns, $selectedid, $urlencodedNameColumns=FALSE, $disabled=FALSE) {
 		// check whether key even exists
 		if(!array_key_exists($field, $this->elements)) {
 			$this->elements[$field] = NULL;
@@ -158,7 +158,10 @@ class Form implements iWriteable {
 
 		// create new dropdown list
 		$dropdown = new Dropdown ( $field );
-		
+		if ($disabled) {
+			$dropdown->setDisabled();
+		}
+
 		global $system_data;
 		$choices = $system_data->dbcon->getForeign ( $table, $idcolumn, $namecolumns );
 		foreach ( $choices as $id => $name ) {
