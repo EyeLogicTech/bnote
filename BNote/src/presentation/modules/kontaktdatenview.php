@@ -28,7 +28,7 @@ class KontaktdatenView extends CrudRefLocationView {
 		$form->addElement(Lang::txt("KontakteData_construct.email"), new Field("email", $contact["email"], FieldType::EMAIL), true, 4);
 		$form->addElement(Lang::txt("KontakteData_construct.birthday"), new Field("birthday", $contact["birthday"], FieldType::DATE), false, 4);
 		$form->addElement(Lang::txt("KontakteData_construct.instrument"), new Dropdown("instrument"), true, 4);
-		$form->setForeign(Lang::txt("KontakteData_construct.instrument"), "instrument", "id", "name", $contact["instrument"]);
+		$form->setForeign(Lang::txt("KontakteData_construct.instrument"), "instrument", "id", "name", $contact["instrument"], FALSE, TRUE);
 		
 		# Website is not relevant for the most people who use the system, just for contacts
 		# $form->addElement(Lang::txt("KontakteData_construct.web"), new Field("web", $contact["web"], FieldType::CHAR), false, 4);
