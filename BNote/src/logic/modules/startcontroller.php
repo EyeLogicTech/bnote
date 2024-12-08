@@ -40,10 +40,13 @@ class StartController extends DefaultController {
 	private function saveParticipation() {
 		if(isset($_GET["otype"]) && isset($_GET["oid"])) {
 			if(!isset($_POST["participation"])) {
-				new BNoteError("Bug - no participation set");
+				$part = 0;
+				$reason = "zoom";
 			}
-			$part = intval($_POST["participation"]);
-			$reason = isset($_POST["reason"]) ? $_POST["reason"] : "";
+			else {
+				$part = intval($_POST["participation"]);
+				$reason = isset($_POST["reason"]) ? $_POST["reason"] : "";
+			}
 			$this->getData()->saveParticipation($_GET["otype"], null, $_GET["oid"], $part, $reason);
 			$this->getView()->start();
 		}
