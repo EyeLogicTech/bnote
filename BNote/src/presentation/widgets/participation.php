@@ -63,6 +63,9 @@ class ParticipationWidget implements iWriteable {
 					<label class="btn btn-outline-danger participation_button" for="<?php echo $fieldId . "_no"; ?>"><i class="bi-x"></i></label>
 				</div>
 				<div class="col-12">
+					<input type="text" name="reason" placeholder="<?php echo Lang::txt("ParticipationWidget_write.reason"); ?>" class="form-control" value="<?php echo $this->reason; ?>" />
+				</div>
+				<div class="col-12">
 					<input type="submit" class="btn btn-primary" value="<?php echo Lang::txt("ParticipationWidget_write.save"); ?>" />
 				</div>
 			</form>
@@ -86,10 +89,33 @@ class ParticipationWidget implements iWriteable {
 					<label class="btn btn-outline-danger participation_button" for="<?php echo $fieldId . "_no"; ?>"><i class="bi-x"></i></label>
 				</div>
 				<div class="col-12">
+					<input type="text" name="reason" id="reason" placeholder="<?php echo Lang::txt("ParticipationWidget_write.reason"); ?>" class="form-control" value="<?php echo $this->reason; ?>" />
+				</div>
+				<div class="col-12">
+					<input type="checkbox" id="zoomBox"/> Zoom
+				</div>
+				<div class="col-12">
 					<input type="submit" class="btn btn-primary" value="<?php echo Lang::txt("ParticipationWidget_write.save"); ?>" />
 				</div>
 			</form>
 		</div>
+
+		<script>
+			$("#zoomBox").change(function() {
+			if (document.getElementById("zoomBox").checked) {
+				$("#reason").val("zoom");
+				document.getElementById("reason").disabled = true;
+				document.getElementsByName("participation").forEach(function(x) {x.disabled = true;});
+				document.getElementById("<?php echo $fieldId . "_no"; ?>").checked = true;
+			}
+			else {
+				$("#reason").val("");
+				document.getElementById("reason").disabled = false; 
+				document.getElementsByName("participation").forEach(function(x) {x.disabled = false;});
+			}
+			});
+		</script>
+
 		<?php
 	}
 	
