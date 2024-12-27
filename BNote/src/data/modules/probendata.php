@@ -367,18 +367,18 @@ class ProbenData extends AbstractLocationData {
 	public function setParticipation($uid, $rid, $value) {
 		$query = "SELECT * FROM rehearsal_user WHERE user = $uid and rehearsal=$rid";
 		$val = $this->database->getSelection($query);
-		if (count($val) == 1) { // already existent
-				$update_query = "INSERT INTO rehearsal_user (rehearsal, user, participate, replyon) VALUES (?,?,?, NOW())";
-				$this->database->prepStatement($update_query, array(
-						array("i", $rid),
-						array("i", $uid),
-						array("i", $value)
-				));
-		} else {
+		if (count($val) > 1) { // already existent
 			$query = "UPDATE rehearsal_user
 						SET participate=$value
 						WHERE user = $uid and rehearsal=$rid";
 			$this->database->execute($query);
+		} else {
+			$update_query = "INSERT INTO rehearsal_user (rehearsal, user, participate, replyon) VALUES (?,?,?, NOW())";
+			$this->database->prepStatement($update_query, array(
+					array("i", $rid),
+					array("i", $uid),
+					array("i", $value)
+			));
 		}
 	}
 
