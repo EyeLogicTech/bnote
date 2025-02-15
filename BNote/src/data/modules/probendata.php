@@ -382,13 +382,13 @@ class ProbenData extends AbstractLocationData {
 		}
 	}
 
-    function getSlotId() {
-        $slotIdTable = $this->database->getSelection("SELECT Id FROM customfield WHERE techname = 'stimmbildung_slot'");
-        if (count($slotIdTable) < 2) {
-            echo "Error: missing customfield stimmbildung_slot";
+    function getSbGroupId() {
+        $groupIdTable = $this->database->getSelection("SELECT id FROM `customfield` WHERE techname = 'stimmbildung_group'");
+        if (count($groupIdTable) < 2) {
+            echo "Error: missing customfield stimmbildung_group";
             return -1;
         }
-        return $slotIdTable[1]["Id"];
+        return $groupIdTable[1]["id"];
     }
 
 	public function getBancantaRehearsalContacts($rid) {
@@ -406,7 +406,6 @@ class ProbenData extends AbstractLocationData {
 					FROM rehearsal_user ru
 					WHERE ru.rehearsal = ?";
 		$val2 = $this->database->getSelection($query2, array(array("i", $rid)));
-
 
         $query3 = "select intval from stimmbildung_config where name='rehearsal'";
 		$val3 = $this->database->getSelection($query3);
@@ -434,31 +433,37 @@ class ProbenData extends AbstractLocationData {
 			$query5 = "SELECT * FROM stimmbildung_slots";
 			$slotNames = $this->database->getSelection($query5);
 
-			$customFieldId = $this->getSlotId();
+			$customFieldId = $this->getSbGroupId();
 			$query4 = "SELECT u.id,cfv.intval FROM `customfield_value` cfv
 							join user u on u.contact = cfv.oid
 						where cfv.customfield=$customFieldId";
 			$val4 = $this->database->getSelection($query4);
-			$map2 = array();  # user-id -> stimmbildung_slot
-			foreach($val4 as $user => $slot) {
-				if (array_key_exists("id", $slot)) {
-					$map2[$slot["id"]] = $slot["intval"];
+			$map2 = array();  // contactId -> sbGroupId
+			foreach($val4 as $sbgInd) {
+				if (array_key_exists("id", $sbgInd)) {
+					$map2[$sbgInd["id"]] = $sbgInd["intval"];
 				}
 			}
 
 			for ($i=1; $i<count($val); $i++) {
-				$uid = $val[$i]["id"];
-				$slot = $map2[$uid];
-				if ($slot > 0 && $slot < count($slotNames)) {
-					if ($val[$i]["participate"] == 0) {
-						$val[$i]["stimmbildung"] = "<b style=\"color:red;\">".$slotNames[$slot]["name"]."</b>";
-						$stimmbildungDirty = True;
-					} else {
-						$val[$i]["stimmbildung"] = "<b>".$slotNames[$slot]["name"]."</b>";
+				$cid = $val[$i]["id"];
+				$sbgInd = $map2[$cid];
+
+				$query4 = "select slot from stimmbildung_groups where id=$sbgInd";
+				$val4 = $this->database->getSelection($query4);
+				if (count($val4) == 2) {
+				$slot = $val4[1]["slot"];
+					if ($slot > 0 && $slot < count($slotNames)) {
+						if ($val[$i]["participate"] == 0) {
+							$val[$i]["stimmbildung"] = "<b style=\"color:red;\">".$slotNames[$slot]["name"]."</b>";
+							$stimmbildungDirty = True;
+						} else {
+							$val[$i]["stimmbildung"] = "<b>".$slotNames[$slot]["name"]."</b>";
+						}
 					}
-				}
-				else {
-					$val[$i]["stimmbildung"] = "-";
+					else {
+						$val[$i]["stimmbildung"] = "-";
+					}
 				}
 			}
 		}

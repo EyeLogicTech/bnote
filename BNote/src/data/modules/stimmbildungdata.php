@@ -25,7 +25,7 @@ class StimmbildungData extends AbstractData
         // Group "Stimmbildung Admin"
 		$currContact = $this->getSysdata()->getUsersContact($uid);
 		$cid = $currContact["id"];
-        $query = "select g.name from `group` g join contact_group cg on cg.group = g.id where cg.contact=$uid";
+        $query = "select g.name from `group` g join contact_group cg on cg.group = g.id where cg.contact=$cid";
         $groups = $this->database->getSelection($query);
 		for ($i=1; $i<count($groups); $i++) {
 			if (strcmp($groups[$i]["name"], "Stimmbildung Admin") == 0) {
@@ -48,19 +48,11 @@ class StimmbildungData extends AbstractData
     function readMembers()
     {
         $groupId = $this->getGroupId();
-        if ($groupId < 0) {
+        if ($groupId < 0) {  // group Stimmbildung
             return false;
         }
-        $slotId = $this->getSlotId();
-        if ($slotId < 0) {
-            return false;
-        }
-        $doneId = $this->getDoneId();
-        if ($doneId < 0) {
-            return false;
-        }
-        $aloneId = $this->getAloneId();
-        if ($aloneId < 0) {
+		$isinSbGroupId = $this->getIsinSbGroupId();
+        if ($isinSbGroupId < 0) {  // custom value stimmbildung_group
             return false;
         }
 
@@ -70,21 +62,50 @@ class StimmbildungData extends AbstractData
                 "concat(c.name,' ',c.surname) as fullname,".
                 "c.instrument,".
                 "i.name as instrumentname,".
-                "cv.intval as slot,".
-                "cvdone.intval as done,".
-                "cvalone.intval as alone ".
+				"cf.intval as sbgroup ".
             "from (contact c ".
                 "join instrument i ON c.instrument=i.id ".
-                "join customfield_value cv ON cv.customField=$slotId and cv.oid=c.id ".
-                "join customfield_value cvdone ON cvdone.customField=$doneId and cvdone.oid=c.id ".
-                "join customfield_value cvalone ON cvalone.customField=$aloneId and cvalone.oid=c.id ".
                 "join contact_group cg ON c.id=cg.contact) ".
+				"join customfield_value cf ON cf.customField=$isinSbGroupId and cf.oid=c.id ".
             "where cg.group=$groupId ".
             "order by instrument,fullname";
         $groupContacts = $this->database->getSelection($query);
 
         return $groupContacts;
     }
+
+	function readSbGroups()
+    {
+        $query =
+            "select * from stimmbildung_groups";
+        $groupContacts = $this->database->getSelection($query);
+
+        return $groupContacts;
+	}
+
+	function setSbGroup($sbGroup, $newSlot)
+    {
+        $this->database->execute(
+            "update stimmbildung_groups ".
+            "set slot = ".$newSlot." ".
+            "where id = ".$sbGroup
+        );
+	}
+
+	function addSbGroup($sbGroup, $slot)
+    {
+        $this->database->execute(
+            "insert stimmbildung_groups values(".$sbGroup.",".$slot.")"
+        );
+	}
+
+	function removeSbGroup($sbGroup)
+    {
+        $this->database->execute(
+            "delete from stimmbildung_groups ".
+            "where id = ".$sbGroup
+        );
+	}
 
     function readParticipation($config) {
         $rid = $config["rehearsal"];
@@ -100,15 +121,15 @@ class StimmbildungData extends AbstractData
         return $res;
     }
 
-    function setMemberSlot($memberId, $newSlot) {
-        $slotId = $this->getSlotId();
-        if ($slotId < 0) {
+    function setMemberSbgroup($memberId, $newSbGroup) {
+        $sbGroupId = $this->getIsinSbGroupId();
+        if ($sbGroupId < 0) {
             return;
         }
         $this->database->execute(
             "update customfield_value ".
-            "set intval = ".$newSlot." ".
-            "where oid = ".$memberId." and customfield = ".$slotId
+            "set intval = ".$newSbGroup." ".
+            "where oid = ".$memberId." and customfield = ".$sbGroupId
         );
     }
 
@@ -133,13 +154,13 @@ class StimmbildungData extends AbstractData
         return $groupIdTable[1]["id"];
     }
 
-    function getSlotId() {
-        $slotIdTable = $this->database->getSelection("SELECT Id FROM customfield WHERE techname = 'stimmbildung_slot'");
-        if (count($slotIdTable) < 2) {
-            echo "Error: missing customfield stimmbildung_slot";
+    function getIsinSbGroupId() {
+        $groupIdTable = $this->database->getSelection("SELECT id FROM `customfield` WHERE techname = 'stimmbildung_group'");
+        if (count($groupIdTable) < 2) {
+            echo "Error: missing customfield stimmbildung_group";
             return -1;
         }
-        return $slotIdTable[1]["Id"];
+        return $groupIdTable[1]["id"];
     }
 
     function getDoneId() {
@@ -160,15 +181,6 @@ class StimmbildungData extends AbstractData
         return $rTable[1]["Id"];
     }
 
-    function getAloneId() {
-        $aloneTable = $this->database->getSelection("SELECT Id FROM customfield WHERE techname = 'stimmbildung_alone'");
-        if (count($aloneTable) < 2) {
-            echo "Error: missing customfield stimmbildung_alone";
-            return -1;
-        }
-        return $aloneTable[1]["Id"];
-    }
-
     function readSlots()
     {
         $query = "SELECT * FROM stimmbildung_slots";
@@ -176,7 +188,7 @@ class StimmbildungData extends AbstractData
         return $slots;
     }
 
-	function setSlots($oldSlots, $newSlots, $members)
+	function setSlots($oldSlots, $newSlots, $sbGroups)
 	{
 		$oldC = count($oldSlots);
 		$newC = count($newSlots);
@@ -201,50 +213,66 @@ class StimmbildungData extends AbstractData
 				$this->database->execute($query);
 			}
 		}
-
 		if ($oldC != $newC) {
-			for ($i=1; $i<count($members); $i++) {
-				$memberId = $members[$i]["id"];
-				$slot = $members[$i]["slot"];
-				if ($slot > 0) {
-					$this->setMemberSlot($memberId, 0);
-				}
+			foreach ($sbGroups as $sbg) {
+				$this->setSbGroup($sbg[1], 0);
 			}
 		}
 	}
 
-    // return array(participation, slots, slotTable, instruments, members)
+    // return array(participation, slots, sbGroups, instruments, members)
     function readData($config)
     {
 		$participation = $this->readParticipation($config);
         $slots = $this->readSlots();
         $members = $this->readMembers();
+		$sbGroups_ = $this->readSbGroups();
+        $sbGroups = [];
+		for ($i=1; $i<count($sbGroups_); $i++) {
+			$slot = $sbGroups_[$i];
+			$sbGroups[$slot["id"]] = [1000000, $slot["id"], $slot["slot"], []]; // sortId, sbGroupId, slot, participants
+		}
         $instruments = $this->getInstruments($members);
-
-        $slotTable = array_fill(0,count($slots), array());
         for ($i=1; $i<count($members); $i++) {
             $id = $members[$i]["id"];
-            $slot = $members[$i]["slot"];
-            if ($slot < 0 || $slot >= count($slots)) {
-                $slot = 0;
-                $this->setMemberSlot($members[$i]["id"], 0);
+            $sbgroup = $members[$i]["sbgroup"];
+            if ($sbgroup < 0) {
+                $sbgroup = 0;
+                $this->setMemberSbGroup($members[$i]["id"], 0);
             }
 
             $p = -1;
             if (array_key_exists($id, $participation)) {
                 $p = $participation[$id];
             }
-            $slotTable[$slot][] = array($id, "".$members[$i]["fullname"], $members[$i]["instrumentname"],
-                $members[$i]["done"], $members[$i]["alone"], $p);
-        }
 
-        return array($participation, $slots, $slotTable, $instruments, $members);
+			if (!array_key_exists($sbgroup, $sbGroups)) {
+				$sbGroups[$sbgroup] = [$id, $sbgroup, 0, []]; // sortId, sbGroupId, slot, participants
+				$this->addSbGroup($sbgroup, 0);
+			}
+			else if ($id < $sbGroups[$sbgroup][0]) { // update sort key
+				$sbGroups[$sbgroup][0] = $id;
+			}
+			array_push($sbGroups[$sbgroup][3], array($id, "".$members[$i]["fullname"], $members[$i]["instrumentname"], $p));
+        }
+		foreach ($sbGroups as $id => $g) {
+			if ($g[0] == 1000000) {
+				$this->removeSbGroup($id);
+				unset($sbGroups[$id]);
+			}
+		}
+
+		usort($sbGroups, function ($a, $b) {
+			return $a[0] - $b[0];
+		});
+
+        return array($participation, $slots, $sbGroups, $instruments, $members);
     }
 
     function readConfig() {
         $query = "select * from stimmbildung_config";
         $x = $this->database->getSelection($query);
-        $result = array("rehearsal" => -10, "autofill" => -10, "activegroup" => -10, "activegroupshown" => -10);
+        $result = array("rehearsal" => -10, "autofill" => -10, "activegroup" => -10);
         for ($i=1; $i<count($x); $i++) {
             $result[$x[$i]["name"]] = $x[$i]["intval"];
         }
@@ -265,61 +293,7 @@ class StimmbildungData extends AbstractData
             );
             $result["activegroup"]=-1;
         }
-        if ($result["activegroupshown"]==-10) {
-            $this->database->execute(
-                "insert stimmbildung_config values(NULL,'activegroupshown',-1)"
-            );
-            $result["activegroupshown"]=-1;
-        }
         return $result;
-    }
-
-    // return (gid, name, sgid, sname)
-    function getActiveGroup($config, $instruments)
-    {
-		if (empty($instruments)) {
-			if ($config["activegroup"] >= 0) {
-				$config["activegroup"] = -1;
-				$this->setActiveGroup(-1);
-			}
-			if ($config["activegroupshown"] >= 0) {
-				$config["activegroupshown"] = -1;
-				$this->setActiveGroupShown(-1);
-			}
-		}
-        else {
-			if ($config["activegroup"] < 0 or !array_key_exists($config["activegroup"], $instruments)) {
-				foreach ($instruments as $key => $value) {
-					if ($key > $config["activegroup"]) {
-						$config["activegroup"] = $key;
-						$this->setActiveGroup($key);
-						break;
-					}
-				}
-				if (!array_key_exists($config["activegroup"], $instruments)) {
-					$instId = array_keys($instruments)[0];
-					$config["activegroup"] = $instId;
-					$this->setActiveGroup($instId);
-				}
-			}
-			if ($config["activegroupshown"] < 0 or !array_key_exists($config["activegroupshown"], $instruments)) {
-				foreach ($instruments as $key => $value) {
-					if ($key > $config["activegroupshown"]) {
-						$config["activegroupshown"] = $key;
-						$this->setActiveGroupShown($key);
-						break;
-					}
-				}
-				if (!array_key_exists($config["activegroupshown"], $instruments)) {
-					$instId = array_keys($instruments)[0];
-					$config["activegroupshown"] = $instId;
-					$this->setActiveGroupShown($instId);
-				}
-			}
-		}
-
-        return array("gid" => $config["activegroup"], "name" => $instruments[$config["activegroup"]],
-            "sgid" => $config["activegroupshown"], "sname" => $instruments[$config["activegroupshown"]]);
     }
 
     function readRehearsal($config) {
@@ -349,117 +323,60 @@ class StimmbildungData extends AbstractData
         return $this->database->getSelection($query);
     }
 
-    function finalizeRehearsal($config, $slots, $slotTable, $newRid, $instruments, $members) {
+	function getNextGroup($sbGroups) {
+		$nextGroup = [];
+		foreach ($sbGroups as $sbg) {
+			if ($sbg[2] > 0) {
+				$nextGroup = [];
+			}
+			else if (count($nextGroup) == 0) {
+				$nextGroup = $sbg;
+			}
+		}
+		if (count($nextGroup) == 0) {
+			if (count($sbGroups) > 0) {
+				return reset($sbGroups);
+			}
+			return [];
+		}
+		return $nextGroup;
+	}
+
+    function finalizeRehearsal($config, $slots, $sbGroups, $newRid, $instruments, $members) {
         $this->log("Finalize rehearsal");
 		$participation = $this->readParticipation($config);
 
-		// set 'done' to all members in slots 1..n and remove them from their slots
-        $this->log("set done to all members in slots");
-		$map = Array();
-        for ($i=1; $i<count($slotTable); $i++) {
-            for ($j=0; $j<count($slotTable[$i]); $j++) {
-                $memberId = $slotTable[$i][$j][0];
-                $this->setMemberDone($memberId, 1);
-                $this->setMemberSlot($memberId, 0);
-				$this->log("remove member $memberId from slot and mark as 'done'");
-				$map[$memberId] = 1;
-            }
-        }
-		for ($i=1; $i<count($members); $i++) {
-			if (array_key_exists($members[$i]["id"], $map)) {
-				$members[$i]["done"] = 1;
-				$this->log("member done: ".$members[$i]["fullname"]." (".$members[$i]["id"].")");
+		$nextGroup = $this->getNextGroup($sbGroups);
+		for ($i=0; $i<count($sbGroups); $i++) {
+			$sbg = $sbGroups[$i];
+			if ($sbg[2] != 0) {
+				$this->log("remove group $sbg[1] from slot $sbg[2]");
+				$this->setSbGroup($sbg[1], 0);
+				$sbGroups[$i][2] = 0;
 			}
 		}
 
-        $activeGroup = $this->getActiveGroup($config, $instruments);
-        $activeGid = $activeGroup["gid"];
-        $activeShownGid = $activeGroup["sgid"];
-
-        // check if all members in group gid are done -> remove all done in gid and gid++
-		$nextGid = $activeGid;
-        $groupDone = true;
-        for ($i = 1; $i < count($members); $i++) {
-            if ($members[$i]["done"]) {
-                continue;
-            }
-            $gid = $members[$i]["instrument"];
-            if ($nextGid <= $activeGid && ($gid < $nextGid || $gid > $activeGid) ||
-                ($nextGid > $activeGid && ($gid > $activeGid && $gid < $nextGid))) {
-                $nextGid = $gid;
-            }
-            if ( $gid == $activeGid ) {
-                $groupDone = false;
-				$this->log("group not 'done' bc of ".$members[$i]["fullname"]." (".$members[$i]["id"].")");
-            }
-        }
-        if ($groupDone) {
-            $this->log("group $activeGid is done");
-            if ($activeGid == $activeShownGid) {
-                $this->log("push shown group to $nextGid");
-                $this->setActiveGroupShown($nextGid);
-                $config["activegroupshown"] = $nextGid;
-                $activeShownGid = $activeGroup["sgid"] = $nextGid;
-            }
-			// unmark all 'done' in gid members and shifting gid++
-			for ($i = 1; $i < count($members); $i++) {
-				if ($members[$i]["done"]) {
-					$gid = $members[$i]["instrument"];
-					if ( $nextGid <= $activeGid && ($gid < $nextGid || $gid >= $activeGid) ||
-							$nextGid > $activeGid && ($gid >= $activeGid && $gid < $nextGid) ) {
-                                $this->log("setMemberDone(".$members[$i]["id"].", 0)");
-						$this->setMemberDone($members[$i]["id"], 0);
-                        $members[$i]["done"] = 1;
+		// fill slots
+		$this->log("do new planning");
+		$running = False;
+		$slotInd = 1;
+		for ($it=0; $it<2; $it++) {
+			for ($i=0; $i<count($sbGroups); $i++) {
+				$sbg = $sbGroups[$i];
+				if ($sbg[1] == $nextGroup[1]) {
+					$running = True;
+				}
+				if ($running && $sbg[2] == 0) {
+					$sbGroups[$i][2] = $slotInd;
+					$this->log("move group $sbg[1] to slot $slotInd");
+					$this->setSbGroup($sbg[1], $slotInd);
+					$slotInd = $slotInd + 1;
+					if ($slotInd > count($slots)) {
+						break;
 					}
 				}
 			}
-            $this->log("moveactiveGroup to $nextGid");
-            $this->setActiveGroup($nextGid);
-            $config["activegroup"] = $nextGid;
-            $activeGid = $activeGroup["gid"] = $nextGid;
-        }
-
-		// check if all _participating_ members in group sgid are done -> sgid++
-		$nextGid = $activeShownGid;
-        $groupDone = true;
-        for ($i = 1; $i < count($members); $i++) {
-			$id = $members[$i]["id"];
-            if ($members[$i]["done"] || (array_key_exists($id, $participation) && $participation[$id] == 0)) {
-                continue;
-            }
-            $gid = $members[$i]["instrument"];
-            if ($nextGid <= $activeShownGid && ($gid < $nextGid || $gid > $activeShownGid) ||
-                ($nextGid > $activeShownGid && ($gid > $activeShownGid && $gid < $nextGid))) {
-                $nextGid = $gid;
-            }
-            if ( $gid == $activeShownGid ) {
-                $groupDone = false;
-            }
-        }
-        if ($groupDone) {
-            $this->log("showngroup $activeShownGid is done");
-            if ($nextGid == $activeGid) {
-				// unmark all 'done' in gid members and shifting gid++
-				for ($i = 1; $i < count($members); $i++) {
-					if ($members[$i]["done"]) {
-						$gid = $members[$i]["instrument"];
-						if ( $nextGid <= $activeShownGid && ($gid < $nextGid || $gid >= $activeShownGid) ||
-								$nextGid > $activeShownGid && ($gid >= $activeShownGid && $gid < $nextGid) ) {
-                                    $this->log("setMemberDone(".$members[$i]["id"].", 0)");
-							$this->setMemberDone($members[$i]["id"], 0);
-                            $members[$i]["done"] = 1;
-						}
-					}
-				}
-                $this->log("push main group to $nextGid");
-                $this->setActiveGroup($nextGid);
-                $config["activegroup"] = $nextGid;
-                $activeGid = $activeGroup["gid"] = $nextGid;
-            }
-			$this->setActiveGroupShown($nextGid);
-            $config["activegroupshown"] = $nextGid;
-            $activeGroup["sgid"] = $activeShownGid = $nextGid;
-        }
+		}
 
 		// update rehearsal
 		$this->log("update rehearsal to $newRid");
@@ -467,21 +384,11 @@ class StimmbildungData extends AbstractData
         $config["rid"] = $newRid;
 		$this->log("read data from database");
         list($participation, $slots, $slotTable, $instruments, $members) = $this->readData($config);
-
-		// do new planning
-        $this->log("do new planning");
-        $this->fillSlotsInternal($config, $slots, $slotTable, $instruments, $participation, $members);
     }
 
     function setActiveGroup($gid) {
         $query = "update stimmbildung_config ".
             "set intval = $gid where name = 'activegroup'";
-        $this->database->execute($query);
-    }
-
-    function setActiveGroupShown($sgid) {
-        $query = "update stimmbildung_config ".
-            "set intval = $sgid where name = 'activegroupshown'";
         $this->database->execute($query);
     }
 
@@ -495,125 +402,13 @@ class StimmbildungData extends AbstractData
 		}
 	}
 
-    function fillSlots($config, $slots, $slotTable, $instruments, $participation, $members) {
-		// remove all members from slots
-        for ($i=1; $i<count($slotTable); $i++) {
-            for ($j=0; $j<count($slotTable[$i]); $j++) {
-                $memberId = $slotTable[$i][$j][0];
-                $this->setMemberSlot($memberId, 0);
-            }
-        }
-
-		// fill slots
-        list($participation, $slots, $slotTable, $instruments, $members) = $this->readData($config);
-        $this->fillSlotsInternal($config, $slots, $slotTable, $instruments, $participation, $members);
-    }
-
 	function log($s) {
-		$ENABLE_LOG = false;
+		$ENABLE_LOG = False;
 		if (!$ENABLE_LOG) {
 			return;
 		}
 
 		echo($s."<br/>\n");
 	}
-
-    function fillSlotsInternal($config, $slots, $slotTable, $instruments, $participation, $members) {
-        $SLOT_COUNT = 3;
-		$this->log("fillSlotsInternal");
-
-        // members: id, fullname, instrument, instrumentname, slot, done, alone
-		$activeGroup = $this->getActiveGroup($config, $instruments);
-        $activeGid = $activeGroup["gid"];
-		$this->log("    activeGroup: ".$activeGroup["name"]." (GID $activeGid)");
-
-        // fill all slots
-        $localGroup = array();
-        $localGroupCount = 0; // number of free members without tag 'alone'
-		$initialActiveGid = $activeGid;
-		$nextGid = $activeGid;
-        $actSlot = 1;
-        $slotCount = 0; // number of members in actual slot
-        while ($actSlot < count($slots)) {
-			$this->log("    fill actSlot=$actSlot");
-
-            // collect all free members
-            for ($i = 1; $i < count($members); $i++) {
-                if ($members[$i]["done"]) {
-                    continue;
-                }
-				$id = $members[$i]["id"];
-				if (!array_key_exists($id, $participation) || $participation[$id] != 0) {
-					$gid = $members[$i]["instrument"];
-					if ($nextGid <= $activeGid && ($gid < $nextGid || $gid > $activeGid) ||
-						($nextGid > $activeGid && ($gid > $activeGid && $gid < $nextGid))) {
-						$nextGid = $gid;
-					}
-					if ($gid == $activeGid) {
-                        $this->log("    add member to choice: $id (".$members[$i]["fullname"].")");
-						array_push($localGroup, array($id, $i));
-                        if (!$members[$i]["alone"]) {
-                            $localGroupCount++;
-                        }
-					}
-				}
-            }
-			$this->log("    localGroup=(size ".count($localGroup)."): ".implode(",",array_map(function($el){ return $el[0]; }, $localGroup)));
-
-            // pick members from localGroup
-            while (!empty($localGroup) && $actSlot<count($slots)) {
-                // check for free members left
-                if ($slotCount > 0 && $localGroupCount == 0) {
-                    $actSlot++;
-                    $slotCount = 0;
-                    continue;
-                }
-
-                // draw free member
-                while (true) {
-                    $j = random_int(0, count($localGroup) - 1);
-                    $id = $localGroup[$j][0];
-                    $i = $localGroup[$j][1];
-                    if ($slotCount > 0 && $members[$i]["alone"]) {
-                        continue; // ends since $localGroupCount > 0 (guaranteed in previous block)
-                    }
-                    break;
-                }
-				$this->log("    pick member ".$id." for slot ".$actSlot);
-                $this->setMemberSlot($id, $actSlot);
-                array_splice($localGroup, $j, 1);
-
-                // advance slot
-                if ($members[$i]["alone"]) {
-                    $actSlot++;
-                    $slotCount = 0;
-                } else {
-                    $slotCount++;
-                    if ($slotCount >= $SLOT_COUNT || ($slotCount >= $SLOT_COUNT-1 && $localGroupCount==4)) {
-                        $localGroupCount -= $SLOT_COUNT;
-                        $actSlot++;
-                        $slotCount = 0;
-                    }
-                }
-            }
-
-            // advance group IDs
-            if (empty($localGroup) && $actSlot<count($slots)) {
-				$isOver = ( $activeGid < $initialActiveGid &&
-						($nextGid >= $initialActiveGid || $nextGid <= $activeGid) ) ||
-					($nextGid >= $initialActiveGid && $activeGid >= $nextGid);
-                $activeGid = $nextGid;
-                if ($slotCount > 0) {
-                    $actSlot++;
-                    $slotCount = 0;
-                }
-				$this->log("    change activeGroup to GID ".$activeGid);
-				if ($isOver) {
-					$this->log("    started at beginning group -> did one loop, exiting");
-					break;
-				}
-            }
-        }
-    }
 }
 ?>
