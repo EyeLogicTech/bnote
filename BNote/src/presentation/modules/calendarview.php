@@ -152,7 +152,40 @@ class CalendarView extends CrudRefLocationView {
 		$appointment = new Link($this->modePrefix() . "appointments&func=addEntity", Lang::txt("CalendarView_startOptions.appointments"));
 		$appointment->addIcon("plus");
 		$appointment->write();
+
+		$terminliste = new Link($this->modePrefix() . "terminliste", "Terminliste");
+		$terminliste->addIcon("list-columns-reverse");
+		$terminliste->write();
+	}
+
+	function terminlisteInternal($all) {
+		Writing::h1("Termine");
+		$data = $this->getData()->getTerminListe($all);
+		$dataDownload = $this->getData()->getTerminListe($all);
+		foreach ($dataDownload as &$d) {
+			$d = implode(',', $d);
+		}
+		$dataDownload = implode('\n', $dataDownload);
+		
+		$table = new Table($data);
+		#$table->removeColumn("id");
+		$table->showFilter(true);
+		$table->write();
+	}
+
+	function terminlisteOptions() {
+		$this->defaultOptions();
+
+		$showAllLink = new Link($this->modePrefix() . "terminlisteAll", "Nur vergangene Termine anzeigen");
+		$showAllLink->write();
+	}
+
+	function terminliste() {
+		$this->terminlisteInternal(False);
+	}
+
+	function terminlisteAll() {
+		$this->terminlisteInternal(True);
 	}
 }
-
 ?>

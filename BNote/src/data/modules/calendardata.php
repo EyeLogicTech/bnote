@@ -231,4 +231,15 @@ class CalendarData extends AbstractLocationData {
 		$this->deleteCustomFieldData('v', $id);
 		parent::delete($id);
 	}
+
+	function getTerminListe($all) {
+		if ($all) {
+			$query = "select * from terminliste_alte_bnote";
+		}
+		else {
+			$query = "select * from terminliste_neue_bnote";
+		}
+		$result = $this->database->getSelection($query);
+		return $result;
+	}
 }
