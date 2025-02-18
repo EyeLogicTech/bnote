@@ -32,21 +32,21 @@ class KommunikationView extends AbstractView {
 	}
 	
 	function startOptions() {
-		$rh = new Link($this->modePrefix() . "rehearsalMail", Lang::txt("KommunikationView_startOptions.rehearsalMail"));
-		$rh->addIcon("arrow-right");
-		$rh->write();
+		//$rh = new Link($this->modePrefix() . "rehearsalMail", Lang::txt("KommunikationView_startOptions.rehearsalMail"));
+		//$rh->addIcon("arrow-right");
+		//$rh->write();
 		
-		$rs = new Link($this->modePrefix() . "rehearsalSerieMail", Lang::txt("KommunikationView_startOptions.rehearsalSerieMail"));
-		$rs->addIcon("arrow-right");
-		$rs->write();
+		//$rs = new Link($this->modePrefix() . "rehearsalSerieMail", Lang::txt("KommunikationView_startOptions.rehearsalSerieMail"));
+		//$rs->addIcon("arrow-right");
+		//$rs->write();
 		
-		$cm = new Link($this->modePrefix() . "concertMail", Lang::txt("KommunikationView_startOptions.concertMail"));
-		$cm->addIcon("arrow-right");
-		$cm->write();
+		//$cm = new Link($this->modePrefix() . "concertMail", Lang::txt("KommunikationView_startOptions.concertMail"));
+		//$cm->addIcon("arrow-right");
+		//$cm->write();
 		
-		$vm = new Link($this->modePrefix() . "voteMail", Lang::txt("KommunikationView_startOptions.voteMail"));
-		$vm->addIcon("arrow-right");
-		$vm->write();
+		//$vm = new Link($this->modePrefix() . "voteMail", Lang::txt("KommunikationView_startOptions.voteMail"));
+		//$vm->addIcon("arrow-right");
+		//$vm->write();
 	}
 	
 	function rehearsalMailTitle() { return Lang::txt("KommunikationView_rehearsalMail.Title"); }
@@ -177,7 +177,7 @@ class KommunikationView extends AbstractView {
 			$groups = $this->getData()->adp()->getGroups(true, true);
 			$selectedGroups = array();
 			foreach ($groups as $g) {
-				if ($g["name"] == "Mitglieder") {
+				if (array_key_exists("name", $g) && $g["name"] == "Mitglieder") {
 					array_push($selectedGroups, $g["id"]);
 				}
 			}
