@@ -54,9 +54,9 @@ class StartView extends CrudRefLocationView {
 		// Calendar Exports
 		$userExt = "?user=" . urlencode($this->getData()->adp()->getLogin());
 		
-		$ical = new Link($GLOBALS["DIR_EXPORT"] . "calendar.ics$userExt", Lang::txt("StartView_startOptions.calendarExport"));
-		$ical->addIcon("save");
-		$ical->write();
+		#$ical = new Link($GLOBALS["DIR_EXPORT"] . "calendar.ics$userExt", Lang::txt("StartView_startOptions.calendarExport"));
+		#$ical->addIcon("save");
+		#$ical->write();
 		
 		// WebCal URL creation
 		$systemUrl = $this->getData()->getSysdata()->getSystemURL();
