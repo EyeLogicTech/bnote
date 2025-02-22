@@ -1014,13 +1014,13 @@ class ProbenView extends CrudRefLocationView {
 			}
 			$contacts[$i]["edit"] = "";
 			if ($state != 1) {
-				$contacts[$i]["edit"] = "<a class=\"btn btn-secondary bnote-opt-btn ms-2 mb-2\" href=\"".$this->modePrefix()."bccheckin&id=".$_GET["id"]."&cid=$cid&ack=yes\">Gesund und anwesend</a>";
+				$contacts[$i]["edit"] = "<a class=\"btn btn-secondary bnote-opt-btn ms-2 mb-2\" href=\"".$this->modePrefix()."bccheckin&id=".$_GET["id"]."&cid=$cid&ack=yes\">&#10003;</a>";
 			}
 			if ($state != 0) {
-				$contacts[$i]["edit"] = $contacts[$i]["edit"] ."<a class=\"btn btn-secondary bnote-opt-btn ms-2 mb-2\" href=\"".$this->modePrefix()."bccheckin&id=".$_GET["id"]."&cid=$cid&ack=no\">Nicht anwesend</a>";
+				$contacts[$i]["edit"] = $contacts[$i]["edit"] ."<a class=\"btn btn-secondary bnote-opt-btn ms-2 mb-2\" href=\"".$this->modePrefix()."bccheckin&id=".$_GET["id"]."&cid=$cid&ack=no\">&#10005;</a>";
 			}
 			if ($state == 0 || $state == 1) {
-				$contacts[$i]["edit"] = $contacts[$i]["edit"]."<a class=\"btn btn-secondary bnote-opt-btn ms-2 mb-2\" href=\"".$this->modePrefix()."bccheckin&id=".$_GET["id"]."&cid=$cid&ack=dn\">Kommt vielleicht noch</a>";
+				$contacts[$i]["edit"] = $contacts[$i]["edit"]."<a class=\"btn btn-secondary bnote-opt-btn ms-2 mb-2\" href=\"".$this->modePrefix()."bccheckin&id=".$_GET["id"]."&cid=$cid&ack=dn\"> ? </a>";
 			}
 		}
 		
