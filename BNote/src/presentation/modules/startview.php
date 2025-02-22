@@ -76,6 +76,10 @@ class StartView extends CrudRefLocationView {
 		$calSubsc = new Link($webcal_link, Lang::txt("StartView_startOptions.calendarSubscribe"));
 		$calSubsc->addIcon("calendar");
 		$calSubsc->write();
+
+		$terminliste = new Link($this->modePrefix() . "terminliste", "Terminliste");
+		$terminliste->addIcon("list-columns-reverse");
+		$terminliste->write();
 	}
 	
 	function startTitle() {
@@ -747,6 +751,47 @@ class StartView extends CrudRefLocationView {
 	function addCommentOptions() {
 		$this->startOptions();
 	}
-}
 
+	function terminlisteInternal($old) {
+		if ($old) {
+			Writing::h1("Vergangene Termine");
+		}
+		else {
+			Writing::h1("Zuk&uuml;nftige Termine");
+		}
+		$data = $this->getData()->getTerminListe($old);
+		$dataDownload = $this->getData()->getTerminListe($old);
+		foreach ($dataDownload as &$d) {
+			$d = implode(',', $d);
+		}
+		$dataDownload = implode('\n', $dataDownload);
+		
+		$table = new Table($data);
+		#$table->removeColumn("id");
+		$table->showFilter(true);
+		$table->write();
+	}
+
+	function terminlisteOptions() {
+		$this->defaultOptions();
+
+		$showAllLink = new Link($this->modePrefix() . "terminlisteOld", "Vergangene Termine anzeigen");
+		$showAllLink->write();
+	}
+
+	function terminliste() {
+		$this->terminlisteInternal(False);
+	}
+
+	function terminlisteOldOptions() {
+		$this->defaultOptions();
+
+		$showAllLink = new Link($this->modePrefix() . "terminliste", "Zuk&uuml;nftige Termine anzeigen");
+		$showAllLink->write();
+	}
+
+	function terminlisteOld() {
+		$this->terminlisteInternal(True);
+	}
+}
 ?>

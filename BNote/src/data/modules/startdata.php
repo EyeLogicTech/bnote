@@ -602,4 +602,15 @@ class StartData extends AbstractLocationData {
 	function getTask($taskId) {
 		return $this->database->fetchRow("SELECT * FROM task WHERE id = ?", array(array("i", $taskId)));
 	}
+
+	function getTerminListe($all) {
+		if ($all) {
+			$query = "select * from terminliste_alte_bnote";
+		}
+		else {
+			$query = "select * from terminliste_neue_bnote";
+		}
+		$result = $this->database->getSelection($query);
+		return $result;
+	}
 }
