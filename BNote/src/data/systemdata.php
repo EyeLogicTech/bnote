@@ -179,6 +179,11 @@ class Systemdata {
  	if(!is_numeric($modulId)) {
  		$modId = $this->dbcon->colValue("SELECT id FROM module WHERE lower(name) = ?", "id", array(array("s", strtolower($modulId))));
  	}
+
+    if (!array_key_exists($modId, $this->getModuleArray())) {
+        return false;
+    }
+
  	$module = $this->getModuleArray()[$modId];
  	
  	// allow access to public pages always
