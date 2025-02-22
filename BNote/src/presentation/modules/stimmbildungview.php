@@ -47,6 +47,31 @@ class StimmbildungView extends AbstractView
         return "<option$boColor value=\"" . $entry[0] . "\">" . $entry[1] . " (" . implode(", ", $flags).")</option>";
     }
 
+	// format a member entry to an HTML-string
+	// $entry: table entry of one member
+	// $showInstrument: true if the instrument should be put into the string
+    function formatTable($entry, $showInstrument) {
+		// collect background color and flags/properties
+        $flags = array();
+        $boColor = "";
+        if ($showInstrument) {
+			// whether the instrument is shown
+            $flags[] = $entry[2];
+        }
+        $participate = $entry[3]; #$entry[5];
+        if ($participate == 0) {
+			// whether "not available" is shown
+            $boColor = " bgcolor=\"#FFa0a0\"";
+            $flags[] = "nicht da";
+        }
+
+		// format to HTML-string
+        if (empty($flags)) {
+            return "<tr><td$boColor>" . $entry[1] . "</td></tr>";
+        }
+        return "<tr><td$boColor>" . $entry[1] . " (" . implode(", ", $flags).")</td></tr>";
+    }
+
 	// main entry point of the module
     function start()
     {
@@ -107,24 +132,28 @@ class StimmbildungView extends AbstractView
         echo ("</td></tr>\n");
         echo ("</table></p>\n");
         ?>
+
         <form width="100%" action="<?php echo "?mod=" . $this->getModId(); ?>" method="POST" class="row g-2 filterbox_form">
         <table width="100%" cellpadding="5"><tr>
-        <td width="300" valign="top">
-            <table width="100%" cellpadding="5">
+        <td width="400" valign="top">
+            <table width="400" cellpadding="5">
         <?php
 		for ($i=1; $i<count($slots); $i++) {
-			echo "<tr><td width='80' valign='top'><B>".$slots[$i]["name"]."</B></td><td width=10>&#160;</td>";
-			echo "<td width='240'><p style=\"border: 1px solid black;padding: 6px\">";
+			echo "<tr><td width='80' valign='top'><B>".$slots[$i]["name"]."</B></td><td width=10>&#160;</td>\n";
+			echo "<td width='100%'>\n";
+			echo "<div style=\"border: 1px solid black;padding: 6px\">\n";
+			echo "<table>\n";
 			for ($j=0; $j<count($sbGroups); $j++) {
 				if ($sbGroups[$j][2] == $i) {
 					for ($k=0; $k<count($sbGroups[$j][3]); $k++) {
 						#if ($k > 0) { echo "<br/>"; }
-						echo $this->formatOption($sbGroups[$j][3][$k], true);
+						echo $this->formatTable($sbGroups[$j][3][$k], true) . "\n";
 					}
 					break;
 				}
 			}
-			echo "</p></td>";
+			echo "</table>\n";
+			echo "</div></td>\n";
 			if ($isAdmin) {
 				echo "<td><button type=\"submit\" name=\"action\" value=\"p".$i."\" class=\"btn btn-primary px-2 py-0\" style=\"margin-top: 0.1rem\">&lt;</button><br/>";
 				echo "<button type=\"submit\" name=\"action\" value=\"m".$i."\" class=\"btn btn-primary px-2 py-0\" style=\"margin-top: 0.1rem\">&gt;</button></td>";
