@@ -768,6 +768,7 @@ class StartView extends CrudRefLocationView {
 		
 		$table = new Table($data);
 		#$table->removeColumn("id");
+		$table->setColumnFormat("wann", "DATE");
 		$table->showFilter(true);
 		$table->write();
 	}
