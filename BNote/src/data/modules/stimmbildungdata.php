@@ -324,22 +324,23 @@ class StimmbildungData extends AbstractData
     }
 
 	function getNextGroup($sbGroups) {
-		$nextGroup = [];
-		foreach ($sbGroups as $sbg) {
-			if ($sbg[2] > 0) {
-				$nextGroup = [];
+		$nextGroupInd = 0; // 0 = no group
+		for ($i=1; $i<count($sbGroups); $i++) {
+			$sbg = $sbGroups[$i];
+			if ($sbg[2] > 0) { // group is planned in some slot
+				$nextGroupInd = 0;
 			}
-			else if (count($nextGroup) == 0) {
-				$nextGroup = $sbg;
+			else if ($nextGroupInd == 0) {
+				$nextGroupInd = $i;
 			}
 		}
-		if (count($nextGroup) == 0) {
-			if (count($sbGroups) > 0) {
-				return reset($sbGroups);
+		if ($nextGroupInd == 0) {
+			if (count($sbGroups) > 1) {
+				return $sbGroups[1];
 			}
 			return [];
 		}
-		return $nextGroup;
+		return $sbGroups[$nextGroupInd];
 	}
 
     function finalizeRehearsal($config, $slots, $sbGroups, $newRid, $instruments, $members) {
@@ -361,7 +362,7 @@ class StimmbildungData extends AbstractData
 		$running = False;
 		$slotInd = 1;
 		for ($it=0; $it<2; $it++) {
-			for ($i=0; $i<count($sbGroups); $i++) {
+			for ($i=1; $i<count($sbGroups); $i++) {
 				$sbg = $sbGroups[$i];
 				if ($sbg[1] == $nextGroup[1]) {
 					$running = True;
