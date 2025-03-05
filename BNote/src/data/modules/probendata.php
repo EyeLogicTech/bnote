@@ -452,7 +452,7 @@ class ProbenData extends AbstractLocationData {
 				$query4 = "select slot from stimmbildung_groups where id=$sbgInd";
 				$val4 = $this->database->getSelection($query4);
 				if (count($val4) == 2) {
-				$slot = $val4[1]["slot"];
+					$slot = $val4[1]["slot"];
 					if ($slot > 0 && $slot < count($slotNames)) {
 						if ($val[$i]["participate"] == 0) {
 							$val[$i]["stimmbildung"] = "<b style=\"color:red;\">".$slotNames[$slot]["name"]."</b>";
@@ -464,6 +464,9 @@ class ProbenData extends AbstractLocationData {
 					else {
 						$val[$i]["stimmbildung"] = "-";
 					}
+				}
+				else {
+					$val[$i]["stimmbildung"] = "X";
 				}
 			}
 		}
