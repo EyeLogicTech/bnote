@@ -59,6 +59,9 @@ class AufgabenView extends CrudRefView {
 			$table->removeColumn(8);
 			$table->removeColumn("completed_at");
 		}
+		else {
+			$table->setColumnFormat("completed_at", "DATE");
+		}
 		$table->renameAndAlign($this->getData()->getFields());
 		$table->setColumnFormat("created_at", "DATE");
 		$table->setColumnFormat("due_at", "DATE");

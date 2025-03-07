@@ -48,6 +48,7 @@ $adp = $startdata->adp();
  */
 function convertTime($datetime) {
 	$dt = DateTime::createFromFormat("Y-m-d H:i:s", $datetime);
+	    $dt->modify('-1 hour'); // Eine Stunde abziehen
 	if($GLOBALS["timezone_on"]) {
 		$utc = new DateTimeZone('UTC');
 		$dt->setTimezone($utc);
@@ -239,6 +240,7 @@ for($i = 1; $i < count($rehearsals); $i++) {
 		}
 	}
 	
+	/*  hL: Kontaktdaten nicht in ics 
 	foreach($participantsYes as $j => $contact)
 	{
 		$line = "ATTENDEE;PARTSTAT=ACCEPTED;ROLE=REQ-PARTICIPANT;CN=" . $contact["name"] . " " . $contact["surname"] . ":MAILTO:" . $contact["email"] . "\r\n";
@@ -259,7 +261,7 @@ for($i = 1; $i < count($rehearsals); $i++) {
 		$line = "ATTENDEE;ROLE=REQ-PARTICIPANT;CN=" . $contact["name"] . " " . $contact["surname"] . ":MAILTO:" . $contact["email"] . "\r\n";
  		echo $line;
 	}
-	
+	*/
 	$cfgExportNotes = $system_data->getDynamicConfigParameter("export_rehearsal_notes");
 	if($cfgExportNotes == 1) {
 		$notes .= "\n" . $rehearsals[$i]["notes"];
@@ -294,7 +296,10 @@ for($i = 1; $i < count($concerts); $i++) {
 	echo "SUMMARY:" . $concerts[$i]["title"] . "\r\n";
 	echo "ORGANIZER:$organizer\r\n";
 	
-	writeStartEnd($concerts[$i]["begin"], $concerts[$i]["end"]);
+	//	writeStartEnd($concerts[$i]["begin"], $concerts[$i]["end"]);
+	$concert_begin_adjusted = (new DateTime($concerts[$i]["begin"]))->modify('-1 hour')->format('Y-m-d H:i:s');
+$concert_end_adjusted = (new DateTime($concerts[$i]["end"]))->modify('-1 hour')->format('Y-m-d H:i:s');
+writeStartEnd($concert_begin_adjusted, $concert_end_adjusted);
 	
 	if($userid == null || $userid < 1) {
 		$location = $concerts[$i]["name"] . " (" .$concerts[$i]["street"] . "\\, ";
@@ -359,7 +364,7 @@ for($i = 1; $i < count($concerts); $i++) {
 			}
 		}
 	}
-	
+	/* hL keine Kontaktdaten in ics
 	foreach($participantsYes as $j => $contact)
 	{
 		$line = "ATTENDEE;PARTSTAT=ACCEPTED;ROLE=REQ-PARTICIPANT;CN=" . $contact["name"] . " " . $contact["surname"] . ":MAILTO:" . $contact["email"] . "\r\n";
@@ -380,7 +385,7 @@ for($i = 1; $i < count($concerts); $i++) {
 		$line = "ATTENDEE;ROLE=REQ-PARTICIPANT;CN=" . $contact["name"] . " " . $contact["surname"] . ":MAILTO:" . $contact["email"] . "\r\n";
  		echo $line;
 	}
-	
+	*/
 	echo "LOCATION:" . $location . "\r\n";
 	
 	// compile description
