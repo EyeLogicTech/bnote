@@ -230,7 +230,7 @@ class StimmbildungData extends AbstractData
         $sbGroups = [];
 		for ($i=1; $i<count($sbGroups_); $i++) {
 			$slot = $sbGroups_[$i];
-			$sbGroups[$slot["id"]] = [1000000, $slot["id"], $slot["slot"], []]; // sortId, sbGroupId, slot, participants
+			$sbGroups[$slot["id"]] = [100000000, $slot["id"], $slot["slot"], []]; // sortId, sbGroupId, slot, participants
 		}
         $instruments = $this->getInstruments($members);
         for ($i=1; $i<count($members); $i++) {
@@ -246,17 +246,20 @@ class StimmbildungData extends AbstractData
                 $p = $participation[$id];
             }
 
+			$sortId = $id + 1000000*$members[$i]["instrument"];
 			if (!array_key_exists($sbgroup, $sbGroups)) {
-				$sbGroups[$sbgroup] = [$id, $sbgroup, 0, []]; // sortId, sbGroupId, slot, participants
+				$sbGroups[$sbgroup] = [$sortId, $sbgroup, 0, []]; // sortId, sbGroupId, slot, participants
 				$this->addSbGroup($sbgroup, 0);
 			}
-			else if ($id < $sbGroups[$sbgroup][0]) { // update sort key
-				$sbGroups[$sbgroup][0] = $id;
+			else {
+				if ($sortId < $sbGroups[$sbgroup][0]) { // update sort key
+					$sbGroups[$sbgroup][0] = $sortId;
+				}
 			}
 			array_push($sbGroups[$sbgroup][3], array($id, "".$members[$i]["fullname"], $members[$i]["instrumentname"], $p));
         }
 		foreach ($sbGroups as $id => $g) {
-			if ($g[0] == 1000000) {
+			if ($g[0] == 100000000) {
 				$this->removeSbGroup($id);
 				unset($sbGroups[$id]);
 			}

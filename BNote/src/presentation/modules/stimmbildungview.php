@@ -165,9 +165,9 @@ class StimmbildungView extends AbstractView
 
 		if($isAdmin) {
         ?>
-        <td style='padding: 10px;' width="200px" valign="top">
+        <td style='padding: 10px;' width="400px" valign="top">
 			<B>Gruppen:</B><BR/><BR/>
-            <select name="slot0" size="24" style="width: 300px">
+            <select name="slot0" size="24" style="width: 400px">
                 <?php
                 $prevInstrument = "None";
                 foreach ($sbGroups as $sbg) {
@@ -177,7 +177,7 @@ class StimmbildungView extends AbstractView
 					if ($sbg[2] == 0) { // slot 0
 						$memberInd = -1;
 						for ($k=0; $k<count($members); $k++) {
-							if (array_key_exists("id", $members[$k]) && $members[$k]["id"] == $sbg[0]) {
+							if (array_key_exists("id", $members[$k]) && $members[$k]["id"] == ($sbg[0]%1000000)) {
 								$memberInd = $k; break;
 							}
 						}
