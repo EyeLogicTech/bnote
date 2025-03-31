@@ -143,7 +143,10 @@ for($i = 1; $i < count($rehearsals); $i++) {
 	echo "SUMMARY:Probe $organizer\r\n";
 	echo "ORGANIZER:$organizer\r\n";
 	
-	writeStartEnd($rehearsals[$i]["begin"], $rehearsals[$i]["end"]);
+	// writeStartEnd($rehearsals[$i]["begin"], $rehearsals[$i]["end"]); ersetzt durch 3 zeilen. uhrzeit 1 h vermindert. hL
+	$rehearsal_begin_adjusted = (new DateTime($rehearsals[$i]["begin"]))->modify('-1 hour')->format('Y-m-d H:i:s');
+$rehearsal_end_adjusted = (new DateTime($rehearsals[$i]["end"]))->modify('-1 hour')->format('Y-m-d H:i:s');
+writeStartEnd($rehearsal_begin_adjusted, $rehearsal_end_adjusted);
 	
 	if($rehearsals[$i]["name"] != "") { 
 		echo "LOCATION:" . $rehearsals[$i]["name"] . " - " .
@@ -240,17 +243,19 @@ for($i = 1; $i < count($rehearsals); $i++) {
 		}
 	}
 	
-	/*  hL: Kontaktdaten nicht in ics 
+	/*  hL: Kontaktdaten nur Absagen in ics
 	foreach($participantsYes as $j => $contact)
 	{
 		$line = "ATTENDEE;PARTSTAT=ACCEPTED;ROLE=REQ-PARTICIPANT;CN=" . $contact["name"] . " " . $contact["surname"] . ":MAILTO:" . $contact["email"] . "\r\n";
  		echo $line;
 	}
+	*/
 	foreach($participantsNo as $j => $contact)
 	{
 		$line = "ATTENDEE;PARTSTAT=DECLINED;ROLE=REQ-PARTICIPANT;CN=" . $contact["name"] . " " . $contact["surname"] . ":MAILTO:" . $contact["email"] . "\r\n";
  		echo $line;
 	}
+	/*
 	foreach($participantsMaybe as $j => $contact)
 	{
 		$line = "ATTENDEE;PARTSTAT=TENTATIVE;ROLE=REQ-PARTICIPANT;CN=" . $contact["name"] . " " . $contact["surname"] . ":MAILTO:" . $contact["email"] . "\r\n";
@@ -364,17 +369,19 @@ writeStartEnd($concert_begin_adjusted, $concert_end_adjusted);
 			}
 		}
 	}
-	/* hL keine Kontaktdaten in ics
+	/* hL  Kontaktdaten nur Absagen in ics
 	foreach($participantsYes as $j => $contact)
 	{
 		$line = "ATTENDEE;PARTSTAT=ACCEPTED;ROLE=REQ-PARTICIPANT;CN=" . $contact["name"] . " " . $contact["surname"] . ":MAILTO:" . $contact["email"] . "\r\n";
  		echo $line;
 	}
+	*/
 	foreach($participantsNo as $j => $contact)
 	{
 		$line = "ATTENDEE;PARTSTAT=DECLINED;ROLE=REQ-PARTICIPANT;CN=" . $contact["name"] . " " . $contact["surname"] . ":MAILTO:" . $contact["email"] . "\r\n";
  		echo $line;
 	}
+	/*
 	foreach($participantsMaybe as $j => $contact)
 	{
 		$line = "ATTENDEE;PARTSTAT=TENTATIVE;ROLE=REQ-PARTICIPANT;CN=" . $contact["name"] . " " . $contact["surname"] . ":MAILTO:" . $contact["email"] . "\r\n";
@@ -452,7 +459,12 @@ for($i = 1; $i < count($appointments); $i++) {
 	echo "UID:" . generateUid("APPOINTMENT", $appointment["id"]) . "\r\n";
 	echo "SUMMARY:" . $appointments[$i]["name"] . "\r\n";
 	echo "ORGANIZER:$organizer\r\n";
-	writeStartEnd($appointment["begin"], $appointment["end"]);
+
+	// writeStartEnd($appointment["begin"], $appointment["end"]); ersetzt durch folgende 3 zeilen. vermindert uhrzeit um 1 h. hL
+$appointment_begin_adjusted = (new DateTime($appointments[$i]["begin"]))->modify('-1 hour')->format('Y-m-d H:i:s');
+$appointment_end_adjusted = (new DateTime($appointments[$i]["end"]))->modify('-1 hour')->format('Y-m-d H:i:s');
+writeStartEnd($appointment_begin_adjusted, $appointment_end_adjusted);
+
 	echo "LOCATION:" . $appointment["locationname"] . ", " . $appointment["street"] . ", " . $appointment["zip"] . " " . $appointment["city"] . "\r\n";
 	echo "COMMENT:" . $appointment["notes"] . "\r\n";
 	echo "END:VEVENT\r\n";
