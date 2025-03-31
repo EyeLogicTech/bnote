@@ -16,23 +16,15 @@ class StimmbildungData extends AbstractData
 
     function readIsAdmin() {
         $uid = $this->getUserId();
-
-        // Super User or Admin
-        if($this->getSysdata()->isUserSuperUser($uid) || $this->getSysdata()->isUserMemberGroup(1, $uid)) {
-            return true;
-        }
-
-        // Group "Stimmbildung Admin"
 		$currContact = $this->getSysdata()->getUsersContact($uid);
 		$cid = $currContact["id"];
-        $query = "select g.name from `group` g join contact_group cg on cg.group = g.id where cg.contact=$cid";
-        $groups = $this->database->getSelection($query);
-		for ($i=1; $i<count($groups); $i++) {
-			if (strcmp($groups[$i]["name"], "Stimmbildung Admin") == 0) {
-				return true;
-			}
-		}
-		return false;
+
+		$sbAdminFieldId = $this->getSbAdminFieldId();
+        $query =
+            "SELECT cf.intval FROM `customfield_value` cf ".
+			"WHERE cf.customfield=$sbAdminFieldId and cf.oid=$cid";
+        $adminRights = $this->database->getSelection($query);
+		return count($adminRights)>=2 and $adminRights[1]["intval"] == 1;
     }
 
     function getInstruments($members) {
@@ -179,6 +171,15 @@ class StimmbildungData extends AbstractData
             return -1;
         }
         return $rTable[1]["Id"];
+    }
+
+    function getSbAdminFieldId() {
+        $groupIdTable = $this->database->getSelection("SELECT id FROM `customfield` WHERE techname = 'stimmbildung_admin'");
+        if (count($groupIdTable) < 2) {
+            echo "Error: missing customfield stimmbildung_admin";
+            return -1;
+        }
+        return $groupIdTable[1]["id"];
     }
 
     function readSlots()
