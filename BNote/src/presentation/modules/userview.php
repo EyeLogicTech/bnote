@@ -1,6 +1,6 @@
 <?php
 /**
- * View for user module.
+ * View for user module. hL Z 43, 195,  249 ModulBerechtigungen
  * @author matti
  *
  */
@@ -37,6 +37,10 @@ class UserView extends CrudRefView {
 		$gdpr = new Link($this->modePrefix() . "gdpr", Lang::txt("UserView_startOptions.question"));
 		$gdpr->addIcon("question");
 		$gdpr->write();
+    
+		$moduleRights = new Link($this->modePrefix() . "moduleRights", "Modulberechtigungen");
+		$moduleRights->addIcon("lock");
+		$moduleRights->write();
 	}
 	
 	function addEntity() {
@@ -179,6 +183,7 @@ class UserView extends CrudRefView {
 			$form->renameElement("Konfiguration", Lang::txt("UserView_privileges.Configuration"));
 			$form->renameElement("Finance", Lang::txt("UserView_privileges.Finances"));
 			$form->renameElement("Equipment", Lang::txt("UserView_privileges.Equipment"));
+			$form->renameElement("Website", "Infoseiten");
 			$form->renameElement("Outfits", Lang::txt("UserView_privileges.Outfits"));
 			$form->renameElement("Admin", Lang::txt("UserView_privileges.System_Information"));
 		}
@@ -244,6 +249,25 @@ class UserView extends CrudRefView {
 		$inactiveUsersList = new Plainlist($inactiveUsers);
 		$inactiveUsersList->setNameField("login");
 		$inactiveUsersList->write();
+	}
+
+	function moduleRights() {
+		// Überschrift
+		Writing::h1("Modulrechte &Uuml;bersicht");
+
+		// Rohdaten laden
+		$rights = $this->getData()->getModuleRights();
+
+		// Tabelle erzeugen (keine Spaltenänderungen)
+		$table = new Table($rights);
+		$table->write();
+	}
+
+	protected function moduleRightsOptions() {
+		// Nur Zurück-Button
+		$back = new Link($this->modePrefix() . "start", "Zur&uuml;ck");
+		$back->addIcon("arrow-left");
+		$back->write();
 	}
 }
 

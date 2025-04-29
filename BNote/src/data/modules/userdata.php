@@ -1,7 +1,7 @@
 <?php
 
 /**
- * DAO for user module.
+ * DAO for user module. hL: Z310 liefert modulberechtigungen
  * @author matti
  *
  */
@@ -307,6 +307,11 @@ class UserData extends AbstractData {
 			$this->delete($uid);
 		}
 	}
+
+	public function getModuleRights() {
+        $query = "SELECT * FROM modulrechte";
+        return $this->database->getSelection($query);
+    }
 }
 
 ?>

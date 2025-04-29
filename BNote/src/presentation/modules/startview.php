@@ -77,7 +77,7 @@ class StartView extends CrudRefLocationView {
 		$calSubsc->addIcon("calendar");
 		$calSubsc->write();
 
-		$terminliste = new Link($this->modePrefix() . "terminliste", "Terminliste");
+		$terminliste = new Link($this->modePrefix() . "terminliste", "Alle Termine");
 		$terminliste->addIcon("list-columns-reverse");
 		$terminliste->write();
 	}

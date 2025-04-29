@@ -1,7 +1,7 @@
 <?php
 
 /**
- * A filebrowser widget that lets you work
+ * A filebrowser widget that lets you work. hlL Z292 liefert PfeilHoch statt .. Z 676 liefert angepasste pfade
  * with file within and below the given
  * root directory.
  * @author matti
@@ -198,9 +198,8 @@ class Filebrowser implements iWriteable {
 	 * as well as a link to the share root for common access.
 	 */
 	private function writeFavs() {
-		// get favorite dirs
+		// Favoriten-Ordner initialisieren (ohne "Meine Dateien")
 		$favs = array(
-			Lang::txt("Filebrowser_writeFavs.myFiles") => $this->sysdata->getUsersHomeDir() ."/",
 			Lang::txt("Filebrowser_writeFavs.commonShare") => $GLOBALS["DATA_PATHS"]["share"]
 		);
 
@@ -210,7 +209,7 @@ class Filebrowser implements iWriteable {
 
 		$groups = $this->adp->getUsersGroups();
 		if($this->sysdata->isUserSuperUser()) {
-			$groups = Database::flattenSelection($this->adp->getGroups(), "id"); // flatten
+			$groups = Database::flattenSelection($this->adp->getGroups(), "id");
 		}
 
 		if($groups != null && count($groups) > 0) {
@@ -220,7 +219,10 @@ class Filebrowser implements iWriteable {
 			}
 		}
 
-		// show links
+        // "Meine Dateien" ganz zum Schluss hinzufügen
+        $favs[Lang::txt("Filebrowser_writeFavs.myFiles")] = $this->sysdata->getUsersHomeDir() . "/";
+
+        // Tabs ausgeben
 		foreach($favs as $caption => $loc) {
 			$active = "";
 			$current_loc = substr($loc, strlen($GLOBALS["DATA_PATHS"]["share"])-1);
@@ -288,6 +290,10 @@ class Filebrowser implements iWriteable {
 			 * be used in a HEREDOC string.
 			 */
 			$name = $item["name"];
+			if ($item["name"] == "..") {
+				$name = '↑'; // statt ".."
+			}
+
 			$link = $item["show"];
 			$icon = $item['icon'];
 			$delete_link = $item["delete"];
@@ -675,24 +681,18 @@ STRING_END;
 	}
 
 	private function getFolderCaption() {
-		if($this->root . $this->path == $this->sysdata->getUsersHomeDir() . "/") {
-			return Lang::txt("Filebrowser_getFolderCaption.myFiles");
+		$path = $this->path;
+		$parts = explode("/", trim($path, "/")); // Zerlege Pfad
+
+		if (count($parts) >= 2 && $parts[0] == "groups" && strpos($parts[1], "group_") === 0) {
+			// Gruppenpfad -> entferne "groups" und "group_XX"
+			$parts = array_slice($parts, 2);
+		} else if (count($parts) >= 2 && $parts[0] == "users") {
+			// Benutzerpfad -> entferne nur "users"
+			$parts = array_slice($parts, 1);
 		}
-		else if(Data::startsWith($this->path, "/groups")) {
-			$gid = $this->getGroupIdFromPath();
-			if($gid == null || $gid == "") $groupName = "";
-			else $groupName = $this->adp->getGroupName($gid);
-			return $groupName;
-		}
-		else if($this->path == "/users/") {
-			return Lang::txt("Filebrowser_getFolderCaption.userFolder");
-		}
-		else if($this->path == "/") {
-			return Lang::txt("Filebrowser_getFolderCaption.commonShare");
-		}
-		else {
-			return $this->path;
-		}
+
+		return implode(" > ", $parts); // Schön formatiert zurückgeben
 	}
 
 	private function getGroupIdFromPath() {
