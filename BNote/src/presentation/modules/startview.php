@@ -2,7 +2,7 @@
 
 /**
  * View for start module.
- * @author matti
+ * @author matti, hL fuer probenteilnahmeliste Z84, 802
  *
  */
 class StartView extends CrudRefLocationView {
@@ -80,6 +80,10 @@ class StartView extends CrudRefLocationView {
 		$terminliste = new Link($this->modePrefix() . "terminliste", "Alle Termine");
 		$terminliste->addIcon("list-columns-reverse");
 		$terminliste->write();
+
+		$probenteilnahmeListe = new Link($this->modePrefix() . "probenteilnahmeliste", "Meine Probenteilnahmen");
+		$probenteilnahmeListe->addIcon("collection-play");
+		$probenteilnahmeListe->write();
 	}
 	
 	function startTitle() {
@@ -793,6 +797,23 @@ class StartView extends CrudRefLocationView {
 
 	function terminlisteOld() {
 		$this->terminlisteInternal(True);
+	}
+
+	function probenteilnahmeliste() {
+		Writing::h1("Probenteilnahmen"); // Überschrift
+		// Hinweistext
+		Writing::p("Hier siehst Du die Zahl der bisherigen Proben für das Projekt und Deine Teilnahme an diesen Proben. Für Korrekturen sprich bitte Barbara Pahl an.");
+		$data = $this->getData()->getProbenteilnahmeListe(); // Daten laden
+		$table = new Table($data); // Tabelle bauen
+		$table->setColumnFormat("probe_am", "DATE");
+		$table->showFilter(true);  // Filter aktivieren
+		$table->write();           // Tabelle anzeigen
+	}
+
+	function probenteilnahmelisteOptions() {
+		$back = new Link($this->modePrefix() . "start", "Zurück");
+		$back->addIcon("arrow-left");
+		$back->write();
 	}
 }
 ?>

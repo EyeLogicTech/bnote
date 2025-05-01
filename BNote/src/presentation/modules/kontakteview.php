@@ -1,7 +1,7 @@
 <?php
 
 /**
- * View for contact module.
+ * View for contact module. hL: import/export-buttons deaktiv zeile 60. zuordnung zu rehearsalphases deaktiv Zeile 605
  * @author matti
  *
  */
@@ -57,15 +57,6 @@ class KontakteView extends CrudRefLocationView {
 		$print->addIcon("printer");
 		$print->write();
 		
-		$vc = new Link($this->modePrefix() . "contactImport", Lang::txt("KontakteView_startOptions.contactImport"));
-		$vc->addIcon("person-rolodex");
-		$vc->write();
-		
-		$vc = new Link($GLOBALS["DIR_EXPORT"] . "kontakte.vcd", Lang::txt("KontakteView_startOptions.contactExport"));
-		$vc->addIcon("file-earmark-arrow-down-fill");
-		$vc->setTarget("_blank");
-		$vc->write();
-	
 		$gdprOk = new Link($this->modePrefix() . "gdprOk", Lang::txt("KontakteView_startOptions.gdprOk"));
 		$gdprOk->addIcon("journal-check");
 		$gdprOk->write();
@@ -599,14 +590,6 @@ class KontakteView extends CrudRefLocationView {
 						$group = new GroupSelector($rehearsals, array(), "rehearsal");
 						$group->setNameColumn("begin");
 						$group->setCaptionType(FieldType::DATE);
-						echo $group->write();
-						?>
-					</div>
-					<div class="start_box_heading"><?php echo Lang::txt("KontakteView_integration.rehearsalphase"); ?></div>
-					<div class="start_box_content">
-						<?php 
-						$phases = $this->getData()->getPhases();
-						$group = new GroupSelector($phases, array(), "rehearsalphase");
 						echo $group->write();
 						?>
 					</div>

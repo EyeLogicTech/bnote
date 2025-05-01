@@ -24,7 +24,10 @@ class KommunikationView extends AbstractView {
 			echo Lang::txt("KommunikationView_start.message");
 			echo '</p>';
 		}
-		
+
+		// Hinweistext unter der Überschrift
+		Writing::p("Hinweis: zur Empfängergruppe <strong>Chormitglieder</strong> gehören die aktiv im Chor Singenden und Tobias, Oliver, Theo.");
+
 		// General mail form
 		$form = $this->createMailForm($this->modePrefix() . "groupmail");
 		$form->addElement(Lang::txt("KommunikationView_start.includeReceivers"), new Field("inclreceivers", True, FieldType::BOOLEAN));

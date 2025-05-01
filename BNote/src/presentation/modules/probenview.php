@@ -1,7 +1,7 @@
 <?php
 
 /**
- * View for rehearsal module.
+ * View for rehearsal module. hL: Probenteilnahme Bearbeiten deaktiv Z. 785, 812
  * @author matti
  *
  */
@@ -782,9 +782,6 @@ class ProbenView extends CrudRefLocationView {
 			$bcParticipation->addIcon("bank2");
 			$bcParticipation->write();
 
-			$editParticipation = new Link($this->modePrefix() . "overview&id=" . $_GET["id"] . "&edit=true", Lang::txt("ProbenView_viewOptions.editParticipation"));
-			$editParticipation->addIcon("card-checklist");
-			$editParticipation->write();
 		}
 		else if(!isset($_GET["tab"]) || $_GET["tab"] == "details") {
 			parent::viewOptions();
@@ -807,9 +804,6 @@ class ProbenView extends CrudRefLocationView {
 			$addContact->addIcon("plus");
 			$addContact->write();
 			
-			$editParticipation = new Link($this->modePrefix() . "overview&id=" . $_GET["id"] . "&edit=true", Lang::txt("ProbenView_viewOptions.editParticipation"));
-			$editParticipation->addIcon("card-checklist");
-			$editParticipation->write();
 				
 			$printPartlist = new Link($this->modePrefix() . "printPartlist&id=" . $_GET["id"], Lang::txt("ProbenView_viewOptions.printPartlist"));
 			$printPartlist->addIcon("printer");
@@ -951,9 +945,6 @@ class ProbenView extends CrudRefLocationView {
 		}
 		else {
 			$this->backToStart();
-			$edit = new Link($this->modePrefix() . "overview$single$rehearsalMode&edit=true", Lang::txt("ProbenView_overviewEdit.buttonLabel"));
-			$edit->addIcon("pen");
-			$edit->write();
 			
 			$pastRehearsals = new Link($this->modePrefix() . "overview&rehearsals=history", Lang::txt("ProbenView_startOptions.timer"));
 			$pastRehearsals->addIcon("clock");

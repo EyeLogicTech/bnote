@@ -1,6 +1,6 @@
 <?php
 /**
- * Data Access Class for rehearsal phase data.
+ * Data Access Class for rehearsal phase data. hl, 24.4.25: ergänzt für projektteilnahme ab zeile 189
  * @author matti
  *
  */
@@ -185,5 +185,10 @@ class ProbenphasenData extends AbstractData {
 		
 		// delete rehearsalphase
 		parent::delete($id);
+	}
+
+	function getProjektTeilnahmen($phaseId) {
+		$query = "SELECT PROJEKT, PROBEN, NAME, STIMME, TEILNAHMEN FROM probenteilnahme_projektsicht WHERE P_ID = ? ";
+		return $this->database->getSelection($query, array(array("i", $phaseId)));
 	}
 }

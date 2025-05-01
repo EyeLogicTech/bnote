@@ -336,7 +336,7 @@ class Translation extends BNoteTranslation {
 			// Regex
 			"Regex_isMoney.error" => "Betrag nicht erkannt.",
 			"Regex_isMoney.fail" => "Betrag",
-			"Regex_fail.error" => "Ein oder mehrere Felder enthalten ungültige Werte. ",																     
+			"Regex_fail.error" => "Ein oder mehrere Felder enthalten ungültige Werte. ",
 			
 			// General: Systemdata *********************************************	
 			
@@ -791,7 +791,7 @@ class Translation extends BNoteTranslation {
 			"GruppenView_construct.addEntityName" => "Gruppe hinzufügen",
 			"GruppenView_start.Title" => "Gruppen",
 			"GruppenView_start.explanation" => "Auf dieser Seite verwaltest du die Gruppen deiner Band.
-		                Die Gruppen \"Administratoren\" und \"Mitglieder\" können nicht gelöscht werden.
+						Die Gruppen \"Administratoren\" und \"Mitglieder\" können nicht gelöscht werden.
 						Möglich weitere Gruppen sind, z.B. Rhythmusgruppe, Combo, etc.",
 			"GruppenView_startOptions.Back" => "Zurück",
 			"GruppenView_startOptions.addEntity" => "Gruppe hinzufügen",
@@ -905,7 +905,7 @@ class Translation extends BNoteTranslation {
 			"KommunikationView_concertMail.concert" => "Auftritt",
 			"KommunikationView_voteMail.Title" => "Umfragebenachrichtigung",
 			"KommunikationView_voteMail.Vote" => "Umfrage",
-			"KommunikationView_createMailForm.recipient" => "EMPFÄNGER (Hinweis: zur Empfängergruppe |Chormitglieder| gehören die aktiv im Chor Singenden und Tobias, Oliver, Theo)",
+			"KommunikationView_createMailForm.recipient" => "EMPFÄNGER",
 			"KommunikationView_createMailForm.subject" => "Betreff",
 			"KommunikationView_createMailForm.Message" => "Nachricht",
 			"KommunikationView_createMailForm.Submit" => "SENDEN",
@@ -1950,7 +1950,7 @@ class Translation extends BNoteTranslation {
 			"StartController_start.flash" => "Schade. Du kannst BNote somit nicht nutzen.",
 			
 			// StartView ******** to finish *********
-			"StartView_start.Feed" => "Aktuelles für Alle",
+			"StartView_start.Feed" => "Start",
 			"StartView_start.Calendar" => "Kalender",
 			"StartView_start.Inbox" => "Eingang",
 			"StartView_startViewR.info" => "Probendetails",
@@ -2220,7 +2220,7 @@ class Translation extends BNoteTranslation {
 			"UserView_privileges.Voting" => "Umfrage",
 			"UserView_privileges.Tasks" => "Aufgaben",
 			"UserView_privileges.Rehearsal_phases" => "Projekte",
-			"UserView_privileges.Calendar" => "Calendar",
+			"UserView_privileges.Calendar" => "Kalender",
 			"UserView_privileges.Tour" => "Tour",
 			"UserView_privileges.Evaluations" => "Stats",
 			"UserView_privileges.User" => "User",
@@ -2231,7 +2231,7 @@ class Translation extends BNoteTranslation {
 			"UserView_privileges.Members" => "Chormitglieder",
 			"UserView_privileges.Messages" => "Nachrichten",
 			"UserView_privileges.Configuration" => "Konfiguration",
-			"UserView_privileges.Finances" => "Finance",
+			"UserView_privileges.Finances" => "Finanzen",
 			"UserView_privileges.Equipment" => "Equipment",
 			"UserView_privileges.Outfits" => "Outfits",
 			"UserView_privileges.System_Information" => "Admin",
@@ -2485,7 +2485,7 @@ class Translation extends BNoteTranslation {
 			"mod_Tour" => "Tour",
 			"mod_Outfits" => "Outfits",
 			"mod_Stats" => "Auswertungen",
-            "mod_Stimmbildung" => "Stimmbildung",
+			"mod_Stimmbildung" => "Stimmbildung",
 			
 			// widgets
 			"addFolder" => "Ordner hinzufügen",

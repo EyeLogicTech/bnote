@@ -2,7 +2,7 @@
 
 /**
  * Data Access Class for Start data.
- * @author matti
+ * @author matti, hL: function probenteilnahmeliste Z616
  *
  */
 class StartData extends AbstractLocationData {
@@ -611,6 +611,12 @@ class StartData extends AbstractLocationData {
 			$query = "select * from terminliste_neue_bnote";
 		}
 		$result = $this->database->getSelection($query);
+		return $result;
+	}
+	function getProbenteilnahmeListe() {
+		$query = "SELECT PROJEKT, PROBEN, NAME, TEILNAHMEN, PROBE_AM, J_N FROM probenteilnahme_usersicht WHERE user = ? ORDER BY PROBE_AM DESC";
+		$params = array(array("i", $this->getUserId()));
+		$result = $this->database->getSelection($query, $params);
 		return $result;
 	}
 }

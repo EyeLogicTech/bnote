@@ -2,7 +2,7 @@
 
 /**
  * View for rehearsal phase module.
- * @author Matti
+ * @author Matti, hL: Probenteilnahme ab Zeile 85
  *
  */
 class ProbenphasenView extends CrudView {
@@ -42,6 +42,9 @@ class ProbenphasenView extends CrudView {
 	
 	protected function tab_rehearsals() {		
 		$rehearsals = $this->getData()->getRehearsalsForPhase($_GET["id"]);
+		// Hinweistext
+		echo "<br>\n";
+		Writing::p("Hier werden die Proben festgelegt, die der Teilnahmestatistik des Projektes zugrunde liegen.");
 		$table = new Table($this->addRemoveColumnToTable("rehearsal", $rehearsals));
 		$table->renameAndAlign(array(
 				"id" => array(Lang::txt("ProbenphasenView_tab_rehearsals.id"), FieldType::INTEGER),
@@ -55,6 +58,9 @@ class ProbenphasenView extends CrudView {
 	
 	protected function tab_concerts() {		
 		$concerts = $this->getData()->getConcertsForPhase($_GET["id"]);
+		// Hinweistext
+		echo "<br>\n";
+		Writing::p("Hier werden die Auftritte festgelegt, die im Rahmen des Projektes stattfinden.");
 		$table = new Table($this->addRemoveColumnToTable("concert", $concerts));
 		$table->renameAndAlign(array(
 				"id" => array(Lang::txt("ProbenphasenView_tab_concerts.id"), FieldType::INTEGER),
@@ -82,12 +88,24 @@ class ProbenphasenView extends CrudView {
 		$table->write();
 	}
 
+	protected function tab_teilnahmen() {
+		$phaseId = $_GET["id"]; // Phase-ID direkt aus der URL
+		$teilnahmen = $this->getData()->getProjektTeilnahmen($phaseId);
+		// Hinweistext 
+		echo "<br>\n";
+		Writing::p("Die Liste zeigt den aktuellen Stand der Teilnahmen an den Proben, die für das Projekt bisher stattgefunden haben. Du kannst die Spalten sortieren und in die Filterbox tippen, was angezeigt werden soll: zB. Bass oder den Namen eines Chormitgliedes.");
+		$table = new Table($teilnahmen);
+		$table->write();
+	}
+
 	function viewDetailTable() {
 		// stem data
 		$dv = new Dataview();
 		$dv->autoAddElements($this->getData()->findByIdNoRef($_GET["id"]));
 		$dv->removeElement("id");
 		$dv->autoRename($this->getData()->getFields());
+		echo "<br>\n"; // Abstand zur Tab-Überschrift
+		Writing::p("Hier werden die Kerndaten des Projektes angezeigt."); // Hinweistext
 		$dv->write();
 	}
 	
@@ -97,7 +115,7 @@ class ProbenphasenView extends CrudView {
 		$tabs = array(
 				"details" => Lang::txt("ProbenphasenView_view.details"),
 				"rehearsals" => Lang::txt("ProbenphasenView_view.rehearsals"),
-				"contacts" => Lang::txt("ProbenphasenView_view.contacts"),
+				"teilnahmen" => "Probenteilnahmen", // Direkt so oder via Sprachdatei
 				"concerts" => Lang::txt("ProbenphasenView_view.concerts")
 		);
 		echo "<div class=\"nav nav-tabs\">\n";

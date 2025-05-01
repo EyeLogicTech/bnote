@@ -1,6 +1,6 @@
 <?php
 /**
- * View for user module. hL Z 43, 195,  249 ModulBerechtigungen
+ * View for user module. hL Z 43, 195, 249, 263 ModulBerechtigungen
  * @author matti
  *
  */
@@ -33,7 +33,7 @@ class UserView extends CrudRefView {
 	
 	function startOptions() {
 		parent::startOptions();
-		
+    
 		$gdpr = new Link($this->modePrefix() . "gdpr", Lang::txt("UserView_startOptions.question"));
 		$gdpr->addIcon("question");
 		$gdpr->write();
@@ -253,19 +253,18 @@ class UserView extends CrudRefView {
 
 	function moduleRights() {
 		// Überschrift
-		Writing::h1("Modulrechte &Uuml;bersicht");
-
+		Writing::h1("Modulrechte Übersicht");
+		// Hinweistext
+		Writing::p("Tippe einen User-Namen in die Filterbox – dann werden die Module gelistet, für die der User berechtigt ist. Tippe einen Modul-Namen in die Filterbox – dann werden die User gelistet, die für das Modul berechtigt sind.");
 		// Rohdaten laden
 		$rights = $this->getData()->getModuleRights();
-
 		// Tabelle erzeugen (keine Spaltenänderungen)
 		$table = new Table($rights);
 		$table->write();
 	}
-
 	protected function moduleRightsOptions() {
 		// Nur Zurück-Button
-		$back = new Link($this->modePrefix() . "start", "Zur&uuml;ck");
+		$back = new Link($this->modePrefix() . "start", "Zurück");
 		$back->addIcon("arrow-left");
 		$back->write();
 	}
