@@ -619,4 +619,42 @@ class StartData extends AbstractLocationData {
 		$result = $this->database->getSelection($query, $params);
 		return $result;
 	}
+	
+	function getProjektProbenliste() {
+	$query = "SELECT PROBE_AM, J_N FROM probenteilnahme_usersicht WHERE user = ? ORDER BY PROBE_AM DESC";
+	$params = array(array("i", $this->getUserId()));
+	return $this->database->getSelection($query, $params);
+	}
+	
+	public function getProjektProbenKopf() {
+	$query = "SELECT PROJEKT, PROBEN, NAME, TEILNAHMEN, PROBE_AM, J_N 
+	          FROM probenteilnahme_usersicht 
+	          WHERE user = ? 
+	          ORDER BY PROBE_AM DESC 
+	          LIMIT 1";
+	$params = array(array("i", $this->getUserId()));
+	$result = $this->database->fetchRow($query, $params);
+	
+	if ($result) {
+		return array(
+			"projekt" => $result["PROJEKT"],
+			"proben" => $result["PROBEN"],
+			"name" => $result["NAME"],
+			"teilnahmen" => $result["TEILNAHMEN"],
+			"probe_am" => $result["PROBE_AM"],
+			"j_n" => $result["J_N"]
+		);
+	} else {
+		return array(
+			"projekt" => null,
+			"proben" => null,
+			"name" => null,
+			"teilnahmen" => null,
+			"probe_am" => null,
+			"j_n" => null
+		);
+	}
 }
+	
+}
+?>

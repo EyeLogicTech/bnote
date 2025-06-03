@@ -1,3 +1,4 @@
+<!-- hL Titelliste DnD Zeile25,26 -->
 <HEAD>
  <title><?php echo $system_data->getApplicationName() . " | " . $system_data->getModuleTitle(); ?></title>
  <meta charset="utf-8">
@@ -19,7 +20,11 @@
  <script type="text/javascript" src="vendor/components/jquery/jquery.min.js"></script>
  <script type="text/javascript" src="lib/jquery/jquery.jqplot.min.js"></script>
  <script type="text/javascript" src="vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script>
+ 
  <script type="text/javascript" src="vendor/datatables/datatables/media/js/jquery.dataTables.min.js"></script>
+ <script src="https://cdn.datatables.net/rowreorder/1.3.3/js/dataTables.rowReorder.min.js"></script>
+ <link rel="stylesheet" href="https://cdn.datatables.net/rowreorder/1.3.3/css/rowReorder.dataTables.min.css">
+ 
  <script type="text/javascript" src='lib/jquery/moment.min.js'></script>
  <script type="text/javascript" src='vendor/fullcalendar/fullcalendar/dist/fullcalendar.min.js'></script>
  <script type="text/javascript" src="vendor/tinymce/tinymce/tinymce.min.js" ></script>

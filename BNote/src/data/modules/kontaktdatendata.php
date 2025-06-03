@@ -3,7 +3,7 @@ require_once $GLOBALS["DIR_DATA_MODULES"] . "kontaktedata.php";
 require_once $GLOBALS['DIR_LOGIC_MODULES'] . "logincontroller.php";
 
 /**
- * Data access object for personal data management module.
+ * Data access object for personal data management module. hL: bugfix function saveSettings, function getContactIdForUser
  * @author matti
  *
  */
@@ -55,9 +55,18 @@ class KontaktdatenData extends KontakteData {
 	}
 	
 	function saveSettings($uid) {
-		$query = "UPDATE user SET email_notification = ? WHERE id = ?";
-		$emn = $_POST["email_notification"] == "" ? 0 : 1;
-		$this->database->execute($query, array(array("i", $emn), array("i", $uid)));
+	$query = "UPDATE user SET email_notification = ? WHERE id = ?";
+	$emn = isset($_POST["email_notification"]) ? 1 : 0;
+	$this->database->execute($query, array(array("i", $emn), array("i", $uid)));
+	}
+
+	function getContactIdForUser($uid) {
+	if ($uid == null || $uid <= 0 || $uid == "") return -1;
+	return $this->database->colValue(
+		"SELECT contact FROM user WHERE id = ?",
+		"contact",
+		array(array("i", $uid))
+	);
 	}
 }
 

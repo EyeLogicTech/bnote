@@ -1,6 +1,6 @@
 <?php
 /**
- * View for finance module.
+ * View for finance module. hL: Einzugliste mit steuernden Feldern ab Z499
  * @author matti
  *
  */
@@ -88,7 +88,7 @@ class FinanceView extends CrudView {
 		$multi_reporting->addIcon("clipboard-data");
 		$multi_reporting->write();
 
-		$einzug = new Link($this->modePrefix() . "einzugliste", "Einzugliste");
+		$einzug = new Link($this->modePrefix() . "einzugliste", "Einzugliste Mitgliederbeiträge");
 		$einzug->addIcon("list-columns-reverse");
 		$einzug->write();
 	}
@@ -469,31 +469,99 @@ class FinanceView extends CrudView {
 	}
 
 	function einzugliste() {
-		Writing::h1("Einzugliste");
-		$data = $this->getData()->getEinzugListe();
-		$dataDownload = $this->getData()->getEinzugListeDownload();
-		foreach ($dataDownload as &$d) {
-			$d = implode(',', $d);
-		}
-		$dataDownload = implode('\n', $dataDownload);
-		echo("<button onclick = \"downloadFile()\"> Herunterladen </button>\n");
-		echo("   <script>\n");
-		echo("      const downloadFile = () => {\n");
-		echo("         const link = document.createElement(\"a\");\n");
-		echo("         const content = \"$dataDownload\";\n");
-		echo("         const file = new Blob([content], { type: 'text/plain' });\n");
-		echo("         link.href = URL.createObjectURL(file);\n");
-		echo("         link.download = \"bancanta-einzug.csv\";\n");
-		echo("         link.click();\n");
-		echo("         URL.revokeObjectURL(link.href);\n");
-		echo("      };\n");
-		echo("   </script>\n");
-		
-		$table = new Table($data);
-		#$table->removeColumn("id");
-		$table->showFilter(true);
-		$table->write();
+	Writing::h1("Einzugliste Mitgliederbeiträge");
+
+	$this->zeigeEinzugMetadaten();   // Zeigt Formular für 4 Felder
+	$this->zeigeEinzugstabelle();    // Zeigt Tabelle + Download
+	}
+	
+	private function zeigeEinzugMetadaten() {
+	$this->zeigeBankHinweistext();
+	$this->zeigeEinzugsperiodeFormular();
+	}
+	
+	private function zeigeBankHinweistext() {
+	$iban = $this->getData()->getBancantaIBAN();
+	$glaeubigerId = $this->getData()->getBancantaGlaeubigerID();
+	?>
+	<p class="mb-2 text-body">
+		IBAN (<?php echo $iban; ?>) und Gläubiger ID (<?php echo $glaeubigerId; ?>) von bancanta werden im Modul Kontakte / bancanta e.V. festgelegt und können dort geändert werden. Hier legst Du die Einzugperiode fest. Sie ist immer halbjährlich: vom 01.01 - 30.06 bzw 01.07 - 31.12. eines Jahres.
+	</p>
+	<?php
+	}
+	
+	private function zeigeEinzugsperiodeFormular() {
+	$periodeVon = $this->getData()->getEinzugperiodeVon();
+	$periodeBis = $this->getData()->getEinzugperiodeBis();
+
+	// Summe holen und formatieren
+	$summe = $this->getData()->getEinzugSumme();
+	$summeFormatted = number_format($summe, 0, '', '.'); // z. B. 99999 -> "99.999"
+	?>
+
+	<form method="POST" action="<?php echo $this->modePrefix(); ?>saveMetadaten">
+		<hr class="my-4">
+
+		<div class="row mb-3">
+			<div class="col-md-3">
+				<label class="form-label">Einzugperiode von:</label>
+				<input class="form-control" type="date" name="einzug_von" value="<?php echo $periodeVon; ?>" />
+			</div>
+			<div class="col-md-3">
+				<label class="form-label">Einzugperiode bis:</label>
+				<input class="form-control" type="date" name="einzug_bis" value="<?php echo $periodeBis; ?>" />
+			</div>
+			<div class="col-md-3 d-flex align-items-end justify-content-between">
+				<button class="btn btn-primary" type="submit">Speichern</button>
+				<span class="ms-3 fw-bold">Gesamtbetrag: <?php echo $summeFormatted; ?>&nbsp;€</span>
+			</div>
+		</div>
+	</form>
+
+	<?php
+	}
+
+	private function zeigeEinzugstabelle() {
+	$data = $this->getData()->getEinzugListe();
+	$dataDownload = $this->getData()->getEinzugListeDownload();
+
+	foreach ($dataDownload as &$d) {
+		$d = implode(',', $d);
+	}
+	$dataDownload = implode('\n', $dataDownload);
+
+	// Visuelle Trennung
+	echo("<hr class='my-4'>");
+
+	// Download-Button
+	echo("<button onclick=\"downloadFile()\"> Liste herunterladen </button>\n");
+	echo("<script>
+		const downloadFile = () => {
+			const link = document.createElement(\"a\");
+			const content = \"$dataDownload\";
+			const file = new Blob([content], { type: 'text/plain' });
+			link.href = URL.createObjectURL(file);
+			link.download = \"bancanta-einzug.csv\";
+			link.click();
+			URL.revokeObjectURL(link.href);
+		};
+	</script>");
+
+	// Tabelle anzeigen
+	$table = new Table($data);
+	#$table->removeColumn("id");
+	$table->showFilter(true);
+	$table->write();
+	}
+	
+	function saveMetadaten() {
+	$data = $this->getData(); // FinanceData-Objekt
+
+	$data->updateMetaField(6, $_POST['einzug_von']); // Einzug von
+	$data->updateMetaField(7, $_POST['einzug_bis']); // Einzug bis
+
+	new Message("Daten gespeichert.", "Die Einzugsperiode wurde aktualisiert.");
+	$this->einzugliste();
 	}
 }
-
 ?>

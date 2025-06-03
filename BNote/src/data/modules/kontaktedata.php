@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Data Access Class for contact data.
+ * Data Access Class for contact data. hL: probenteilnahmen
  * @author matti
  *
  */
@@ -478,4 +478,17 @@ class KontakteData extends AbstractLocationData {
 		return $this->database->colValue("SELECT gdpr_code FROM contact WHERE email = ?", "gdpr_code", array(array("s", $email)));
 	}
 	
+	public function getProbenTeilnahmen($cid) {
+    $this->regex->isPositiveAmount($cid);
+
+    $query = "SELECT JAHR, PROBE_AM, TEILGENOMMEN, PROJEKT 
+              FROM probenteilnahme_contactsicht 
+              WHERE CONTACT = ?";
+    
+    return $this->database->getSelection($query, array(array("i", $cid)));
+	}
+	public function getProbenTeilnehmerName($cid) {
+    $query = "SELECT NAME FROM probenteilnahme_contactsicht WHERE CONTACT = ? LIMIT 1";
+    return $this->database->colValue($query, "NAME", array(array("i", $cid)));
+	}
 }

@@ -1,5 +1,5 @@
 <?php
-
+// hL: function editList: Titel jetzt verschiebbar.
 class ProgramView extends CrudView {
 	
 	function __construct($ctrl) {
@@ -147,51 +147,70 @@ class ProgramView extends CrudView {
 		$lnk->setTarget("_blank");
 		$lnk->write();
 	}
-	
+
 	function editList() {
-		Writing::h2($this->getData()->getProgramName($_GET["id"]));
-		Writing::p(Lang::txt("ProgramView_editList.message"));
-		
-		// Track D'n'd
-		$tracks = $this->getData()->getSongsForProgram($_GET["id"]);
-		$delHref = $this->modePrefix() . "delSong&id=" . $_GET["id"] . "&psid=";
-		$delCaption = Lang::txt("AbstractView_deleteConfirmationMessage.delete");
-		$tracks = Table::addDeleteColumn($tracks, $delHref, "delete", $delCaption, "trash3", "psid");
-		$tab = new Table($tracks);
-		$tab->hideColumn("psid");
-		$tab->hideColumn("rank");
-		$tab->hideColumn("song");
-		$saveLink = $this->modePrefix() . "saveList&id=" . $_GET["id"];
-		$tab->allowRowReorder(true, $saveLink);
-		$tab->write();
-				
-		// add tracks
-		?>
-		<div class="row mt-3">
-		<?php
-		$addTarget = $this->modePrefix() . "addSong&id=" . $_GET["id"];
-		$songs = $this->getData()->getAllSongs();
-		$optionsAdd = array();
-		for($i = 1; $i < count($songs); $i++) {
-			$song_title = $songs[$i]["title"];
-			$song_id = $songs[$i]["id"];
-			$optionsAdd[$song_id] = $song_title;
+	Writing::h2($this->getData()->getProgramName($_GET["id"]));
+	Writing::p(Lang::txt("ProgramView_editList.message"));
+
+	// Track D'n'd
+	$tracks = $this->getData()->getSongsForProgram($_GET["id"]);
+	$delHref = $this->modePrefix() . "delSong&id=" . $_GET["id"] . "&psid=";
+	$delCaption = Lang::txt("AbstractView_deleteConfirmationMessage.delete");
+	$tracks = Table::addDeleteColumn($tracks, $delHref, "delete", $delCaption, "trash3", "psid");
+
+	// Hamburger-Symbol direkt in Titel einfügen
+	foreach ($tracks as &$row) {
+		if (isset($row["title"])) {
+			$row["title"] = '<span style="color: #888; font-size: 0.9em; margin-right: 0.5em;">☰</span>' . htmlspecialchars($row["title"]);
 		}
-		$this->trackBox($addTarget, Lang::txt("ProgramView_editList.addSong"), "plus", Lang::txt("ProgramView_editList.add"), "song", $optionsAdd);
-		
-		// add tracks from template
-		$addFromTemplate = $this->modePrefix() . "addSongsFromTemplate&id=" . $_GET["id"];
-		$templates = $this->getData()->getTemplates();
-		$templateOptions = array();
-		for($i = 1; $i < count($templates); $i++) {
-			$templateOptions[$templates[$i]["id"]] = $templates[$i]["name"];
-		}
-		$this->trackBox($addFromTemplate, Lang::txt("ProgramView_editList.addFromTemplate"), "setlist", Lang::txt("ProgramView_editList.template"), "template", $templateOptions);
-		?>
-		</div>
-		<?php
 	}
+	unset($row);
+
+	$tab = new Table($tracks);
+	$tab->renameHeader("title", "Titel☰schieben");
+	$tab->renameHeader("composer", "Komponist");
+	$tab->renameHeader("length", "Dauer");
+	$tab->renameHeader("notes", "Notizen");
 	
+	// Spalten ausblenden
+	$tab->hideColumn("psid");
+	$tab->hideColumn("rank");
+	$tab->hideColumn("song");
+	$tab->hideColumn("genre");
+
+	// Reordering aktivieren
+	$saveLink = $this->modePrefix() . "saveList&id=" . $_GET["id"];
+	$tab->allowRowReorder(true, $saveLink);
+	$tab->write();
+
+	// add tracks
+	?>
+	<div class="row mt-3">
+	<?php
+	$addTarget = $this->modePrefix() . "addSong&id=" . $_GET["id"];
+	//$songs = $this->getData()->getAllSongs();
+	$songs = $this->getData()->getActiveSongs();
+	$optionsAdd = array();
+	for ($i = 1; $i < count($songs); $i++) {
+		$song_title = $songs[$i]["title"];
+		$song_id = $songs[$i]["id"];
+		$optionsAdd[$song_id] = $song_title;
+	}
+	$this->trackBox($addTarget, Lang::txt("ProgramView_editList.addSong"), "plus", Lang::txt("ProgramView_editList.add"), "song", $optionsAdd);
+
+	// add tracks from template
+	$addFromTemplate = $this->modePrefix() . "addSongsFromTemplate&id=" . $_GET["id"];
+	$templates = $this->getData()->getTemplates();
+	$templateOptions = array();
+	for ($i = 1; $i < count($templates); $i++) {
+		$templateOptions[$templates[$i]["id"]] = $templates[$i]["name"];
+	}
+	$this->trackBox($addFromTemplate, Lang::txt("ProgramView_editList.addFromTemplate"), "setlist", Lang::txt("ProgramView_editList.template"), "template", $templateOptions);
+	?>
+	</div>
+	<?php
+	}
+			
 	private function trackBox($target, $title, $icon, $buttonLabel, $selectName, $options) {
 		?>
 		<div class="trackbox col-md-3"><form action="<?php echo $target ?>" method="POST">
@@ -276,5 +295,11 @@ class ProgramView extends CrudView {
 	
 	private function writeIcon($name) {
 		echo "<i class=\"bi-$name\"></i>";
+	}
+	private function getTitleColumnIndex($tracks) {
+	if (empty($tracks)) return 1;
+	$keys = array_keys($tracks[0]);
+	$index = array_search("title", $keys);
+	return $index !== false ? $index + 1 : 1; // Tabellen-Spalten sind 1-basiert
 	}
 }

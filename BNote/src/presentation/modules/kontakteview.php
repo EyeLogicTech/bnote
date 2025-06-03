@@ -1,7 +1,7 @@
 <?php
 
 /**
- * View for contact module. hL: import/export-buttons deaktiv zeile 60. zuordnung zu rehearsalphases deaktiv Zeile 605
+ * View for contact module. hL: import/export-buttons deaktiv zeile 60. zuordnung zu rehearsalphases deaktiv Zeile 605. probenteilnahmen
  * @author matti
  *
  */
@@ -352,18 +352,23 @@ class KontakteView extends CrudRefLocationView {
 	}
 	
 	function additionalViewButtons() {
-		// only show when it doesn't already exist
-		if(!$this->getData()->hasContactUserAccount($_GET["id"])) {
-			// show button
-			$btn = new Link($this->modePrefix() . "createUserAccount&id=" . $_GET["id"], Lang::txt("KontakteView_additionalViewButtons.user"));
-			$btn->addIcon("person");
-			$btn->write();
-		}
-		
-		// GDPR report
-		$gdpr = new Link($this->modePrefix() . "gdprReport&id=" . $_GET["id"], Lang::txt("KontakteView_additionalViewButtons.question"));
-		$gdpr->addIcon("person-rolodex");
-		$gdpr->write();
+	// only show when it doesn't already exist
+	if(!$this->getData()->hasContactUserAccount($_GET["id"])) {
+		// show button
+		$btn = new Link($this->modePrefix() . "createUserAccount&id=" . $_GET["id"], Lang::txt("KontakteView_additionalViewButtons.user"));
+		$btn->addIcon("person");
+		$btn->write();
+	}
+
+	// GDPR report
+	$gdpr = new Link($this->modePrefix() . "gdprReport&id=" . $_GET["id"], Lang::txt("KontakteView_additionalViewButtons.question"));
+	$gdpr->addIcon("person-rolodex");
+	$gdpr->write();
+
+	// Probenteilnahmen
+	$proben = new Link($this->modePrefix() . "showProbenteilnahmen&id=" . $_GET["id"], "Probenteilnahmen");
+	$proben->addIcon("calendar-check");
+	$proben->write();
 	}
 	
 	function editEntityForm($write=true) {
@@ -803,6 +808,27 @@ class KontakteView extends CrudRefLocationView {
 	
 	function gdprNOK() {
 		Writing::p(Lang::txt("KontakteView_gdprNOK.message"));
+	}
+	
+	function showProbenteilnahmen() {
+    $cid = $_GET["id"];
+    $data = $this->getData()->getProbenteilnahmen($cid);
+    $name = $this->getData()->getProbenTeilnehmerName($cid);
+
+    Writing::h3("Probenteilnahmen von " . $name);
+
+    if (count($data) <= 1) {
+        Writing::p("Keine Proben gefunden.");
+        return;
+    }
+
+    $table = new Table($data);
+    $table->setColumnFormat("probe_am", "DATE");
+    $table->renameHeader("JAHR", "Jahr");
+    $table->renameHeader("PROBE_AM", "Probe");
+    $table->renameHeader("TEILGENOMMEN", "Teilnahme");
+    $table->renameHeader("PROJEKT", "Projekt");
+    $table->write();
 	}
 }
 

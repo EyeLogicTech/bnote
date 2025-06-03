@@ -3,7 +3,7 @@
 /**
  * 
  * Data Access Object for program methods in concert module.
- * @author matti
+ * @author matti. hL: fix typo function create($values) isTempalte. function getActiveSongs
  *
  */
 class ProgramData extends AbstractData {
@@ -30,7 +30,7 @@ class ProgramData extends AbstractData {
 	}
 	
 	function create($values) {
-		if(isset($values["isTempalte"])) {
+		if(isset($values["isTemplate"])) {
 			$values["isTemplate"] = "1";
 		}
 		else {
@@ -90,6 +90,11 @@ class ProgramData extends AbstractData {
 		$query = "SELECT id, title, length FROM song ORDER BY title";
 		$selection = $this->database->getSelection($query);
 		return $this->urldecodeSelection($selection, array("title"));
+	}
+	function getActiveSongs() {
+    $query = "SELECT id, title, length FROM song WHERE is_active = 1 ORDER BY title";
+    $selection = $this->database->getSelection($query);
+    return $this->urldecodeSelection($selection, array("title"));
 	}
 	
 	function addSongToProgram($pid) {

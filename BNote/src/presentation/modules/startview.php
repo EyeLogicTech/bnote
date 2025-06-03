@@ -2,7 +2,7 @@
 
 /**
  * View for start module.
- * @author matti, hL fuer probenteilnahmeliste Z84, 802
+ * @author matti, hL fuer probenteilnahmeliste Z84, 802, in function start: rehearsalcard farbe, scrollverhalten, nav-bar mini-icons entfernt, user feedback bei rehearsal, concert.
  *
  */
 class StartView extends CrudRefLocationView {
@@ -84,6 +84,8 @@ class StartView extends CrudRefLocationView {
 		$probenteilnahmeListe = new Link($this->modePrefix() . "probenteilnahmeliste", "Meine Probenteilnahmen");
 		$probenteilnahmeListe->addIcon("collection-play");
 		$probenteilnahmeListe->write();
+		// Neuer Button für Stimmbildung
+
 	}
 	
 	function startTitle() {
@@ -91,120 +93,134 @@ class StartView extends CrudRefLocationView {
 	}
 	
 	function start() {
-		$otype = isset($_GET["otype"]) ? $_GET["otype"] : "N";  // N = News
-		$inboxItems = $this->getData()->getInboxItems();
-		
-		if($otype != "N") {
-			$detailsTitle = $this->findInboxItemTitle($inboxItems, $otype, $_GET["oid"]);
-		}
-		else {
-			// news
-			$detailsTitle = Lang::txt("StartView_start_box.heading");
-		}
-		$news = $this->getData()->getNews();
-		
-		if($news != "" || $this->getData()->getSysdata()->gdprOk() == 0) {
-			// GDPR
-			if($this->getData()->getSysdata()->gdprOk() == 0) {
-				?>
-				<div class="row">
-					<div class="col-md-12 mb-3">
-						<span class="warning">
-							<?php echo Lang::txt("StartView_start.warning"); ?>
-						</span>
-						<a href="?mod=terms" target="_blank"><?php echo Lang::txt("StartView_start.terms"); ?></a>
-						<br/>
-						<?php 
-						$yes = new Link($this->modePrefix() . "gdprOk&accept=1", Lang::txt("StartView_start.checkmark"));
-						$yes->addIcon("check-square");
-						$yes->write();
-						$no = new Link($this->modePrefix() . "gdprOk&accept=0", Lang::txt("StartView_start.cancel"));
-						$no->addIcon("x-square");
-						$no->write();
-						?>
-					</div>
-				</div>
-				<?php
-				// do not show anything on the start page unless the user has selected (ok)
-				return;
-			}
-		}
-		
-		?>
-		<div class="row">
-			<div class="col-md-3">
-				<!-- FEED -->
-				<div class="start_box_heading p-2 mb-1">
-					<div class="d-sm-inline-flex"><?php echo Lang::txt("StartView_start.Inbox"); ?></div>
-					<?php 
-					$cardHrefPrefix = $this->modePrefix() . "start&only=";
-					?>
-					<div class="d-sm-inline-flex">
-						<a href="<?php echo $cardHrefPrefix; ?>R" class="p-1 text-light"><i class="bi-collection-play"></i></a>
-						<a href="<?php echo $cardHrefPrefix; ?>C" class="p-1 text-light"><i class="bi-mic"></i></a>
-						<a href="<?php echo $cardHrefPrefix; ?>V" class="p-1 text-light"><i class="bi-check2-square"></i></a>
-						<a href="<?php echo $cardHrefPrefix; ?>A" class="p-1 text-light"><i class="bi-calendar2-week"></i></a>
-						<a href="<?php echo $cardHrefPrefix; ?>T" class="p-1 text-light"><i class="bi-list-task"></i></a>
-						<a href="<?php echo $this->modePrefix(); ?>start" class="p-1 text-light"><i class="bi-x-square-fill"></i></a>
-					</div>
-				</div>
-				<?php
-				$newsActive = (!isset($_GET["otype"]) || !isset($_GET["oid"]) || ($_GET["otype"] == "N"));
-				$oTypeR = False;
-				if ( array_key_exists( "otype", $_GET ) ) {
-					$oTypeR = $_GET["otype"] == "R";
-				}
-				$this->writeCard(Lang::txt("StartView_start_box.heading"), substr($news, 0, 50) . "...", $this->modePrefix() . "start&otype=N", $newsActive, NULL, NULL, NULL, $oTypeR);
-				
-				$sortedInboxItems = array_column($inboxItems, 'replyUntil');
-				array_multisort($sortedInboxItems, SORT_ASC, $inboxItems);
-				
-				foreach($inboxItems as $item) {
-					$only = isset($_GET["only"]) ? "only=" . $_GET["only"] : "";
-					$href = $this->modePrefix() . "start&otype=" . $item["otype"] . "&oid=" . $item["oid"] . "$only#itemContentScreen";
-					$active = (isset($_GET["otype"]) && isset($_GET["oid"]) && $_GET["otype"] == $item["otype"] && $_GET["oid"] == $item["oid"]);
-					$part = isset($item["participation"]) ? $item["participation"] : NULL;
-					$status = isset($item["status"]) ? $item["status"] : NULL;
-					if(!isset($_GET["only"]) || (isset($_GET["only"]) && $_GET["only"] == $item["otype"])) {
-						$this->writeCard($item["title"], $item["preview"], $href, $active, $item["due"], $part, $status, $oTypeR);
-					}
-				}
-				?>
-			</div>
-			<div class="col-md-9" id="itemContentScreen">
-				<!-- CONTENT -->
-				<div class="start_box_content_heading p-2 mb-1"><?php echo $detailsTitle; ?></div>
-				<div class="py-2">
-				<?php 
-				// If discussions are allowed, create column on the right with discussion in chat style
-				if($this->getData()->getSysdata()->getDynamicConfigParameter("discussion_on") == 1 && $otype != "N") {
-					?>
-					<div class="row">
-						<div class="col-md-9">
-							<?php 
-							$startFunc = "startView" . $otype;
-							$this->$startFunc();
-							?>
-						</div>
-						<div class="col-md-3">
-							<?php 
-							// Chat Widget
-							$chat = new ChatWidget($otype, $_GET["oid"], $this->getData()->adp(), $this->modePrefix() . "addComment");
-							$chat->write();
-							?>
-						</div>
-					</div>
-					<?php
-				}
-				else {
-					$startFunc = "startView" . $otype;
-					$this->$startFunc();
-				}
-				?>
-				</div>
-			</div>
-		</div>
-		<?php
+    // ─────────────── Globaler CSS-Puffer und Smooth-Scroll ───────────────
+    ?>
+    <style>
+      /* Abstand für Fragment-Scroll */
+      html {
+        scroll-padding-top: 60px;
+        scroll-behavior: smooth;
+      }
+
+      /* Aktive Card: linker Rand in Braun */
+      .start_box_active {
+        border-left: 4px solid #8B4513 !important;
+        border-right: none !important;
+      }
+
+      /* Rehearsal-Cards: rechter Rand grün */
+      .start_box_participation_yes {
+        border-right: 4px solid green !important;
+      }
+    </style>
+    <?php
+
+    $otype      = isset($_GET["otype"]) ? $_GET["otype"] : "N";  // N = News
+    $inboxItems = $this->getData()->getInboxItems();
+
+    if ($otype != "N") {
+        $detailsTitle = $this->findInboxItemTitle($inboxItems, $otype, $_GET["oid"]);
+    } else {
+        $detailsTitle = Lang::txt("StartView_start_box.heading");
+    }
+    $news = $this->getData()->getNews();
+
+    // GDPR-Block
+    if ($news !== "" || $this->getData()->getSysdata()->gdprOk() == 0) {
+        if ($this->getData()->getSysdata()->gdprOk() == 0) {
+            ?>
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <span class="warning"><?php echo Lang::txt("StartView_start.warning"); ?></span>
+                <a href="?mod=terms" target="_blank"><?php echo Lang::txt("StartView_start.terms"); ?></a><br/>
+                <?php 
+                  (new Link($this->modePrefix() . "gdprOk&accept=1", Lang::txt("StartView_start.checkmark")))
+                    ->addIcon("check-square")->write();
+                  (new Link($this->modePrefix() . "gdprOk&accept=0", Lang::txt("StartView_start.cancel")))
+                    ->addIcon("x-square")->write();
+                ?>
+              </div>
+            </div>
+            <?php
+            return;
+        }
+    }
+    ?>
+    <div class="row">
+      <div class="col-md-3">
+        <!-- FEED -->
+        <div class="start_box_heading p-2 mb-1">
+          <div class="d-sm-inline-flex">
+            <?php echo Lang::txt("StartView_start.Inbox"); ?>
+          </div>
+          <!-- Icons entfernt -->
+        </div>
+        <?php
+        $newsActive = ($otype === "N");
+
+        // News-Card mit Anker zum Detailbereich
+        $newsHref = $this->modePrefix() . "start&otype=N#itemContentScreen";
+        $this->writeCard(
+            Lang::txt("StartView_start_box.heading"),
+            substr($news, 0, 50) . "...",
+            $newsHref,
+            $newsActive,
+            NULL,
+            NULL,
+            NULL,
+            false
+        );
+
+        // alle anderen Inbox-Items
+        $sorted = array_column($inboxItems, 'replyUntil');
+        array_multisort($sorted, SORT_ASC, $inboxItems);
+        foreach ($inboxItems as $item) {
+            $only   = isset($_GET["only"]) ? "only=" . $_GET["only"] : "";
+            $href   = $this->modePrefix()
+                      . "start&otype={$item['otype']}&oid={$item['oid']}"
+                      . "$only#itemContentScreen";
+            $active = ($otype === $item["otype"] && isset($_GET["oid"])
+                       && $_GET["oid"] == $item["oid"]);
+            $part   = $item["participation"] ?? NULL;
+            $status = $item["status"]        ?? NULL;
+            if (!isset($_GET["only"]) || $_GET["only"] === $item["otype"]) {
+                $isReh = ($item["otype"] === "R");
+                $this->writeCard(
+                    $item["title"],
+                    $item["preview"],
+                    $href,
+                    $active,
+                    $item["due"],
+                    $part,
+                    $status,
+                    $isReh
+                );
+            }
+        }
+        ?>
+      </div>
+
+      <div class="col-md-9" id="itemContentScreen">
+        <!-- CONTENT -->
+        <div class="start_box_content_heading p-2 mb-1">
+          <?php echo $detailsTitle; ?>
+        </div>
+        <div class="py-2">
+          <?php 
+          if ($this->getData()->getSysdata()->getDynamicConfigParameter("discussion_on") == 1 && $otype !== "N") {
+            echo '<div class="row"><div class="col-md-9">';
+            $this->{"startView{$otype}"}();
+            echo '</div><div class="col-md-3">';
+            (new ChatWidget($otype, $_GET["oid"], $this->getData()->adp(), $this->modePrefix() . "addComment"))->write();
+            echo '</div></div>';
+          } else {
+            $this->{"startView{$otype}"}();
+          }
+          ?>
+        </div>
+      </div>
+    </div>
+    <?php
 	}
 	
 	private function findInboxItemTitle($inboxItems, $itemType, $id) {
@@ -582,7 +598,18 @@ class StartView extends CrudRefLocationView {
 	}
 	
 	function saveParticipationOptions() {
-		$this->backToStart();
+    echo '<div class="d-flex align-items-center mb-3">';
+    
+    // Linker Bereich: Meldung
+    echo   '<div class="me-auto">';
+    echo '<h6 class="text-danger mb-1">Meldung gespeichert</h6>';
+    echo     '<span class="d-block">Aktualisiere Deine Teilnahmemeldung, wenn sich etwas ändert.&nbsp;&nbsp;</span>';
+    echo   '</div>';
+    
+    // Rechter Bereich: OK-Button
+    echo   '<a href="main.php?mod=1" class="btn btn-secondary">OK</a>';
+    
+    echo '</div>';
 	}
 	
 	function gigcard() {
@@ -799,15 +826,37 @@ class StartView extends CrudRefLocationView {
 		$this->terminlisteInternal(True);
 	}
 
-	function probenteilnahmeliste() {
-		Writing::h1("Probenteilnahmen"); // Überschrift
-		// Hinweistext
-		Writing::p("Hier siehst Du die Zahl der bisherigen Proben für das Projekt und Deine Teilnahme an diesen Proben. Für Korrekturen sprich bitte Barbara Pahl an.");
-		$data = $this->getData()->getProbenteilnahmeListe(); // Daten laden
-		$table = new Table($data); // Tabelle bauen
+	public function probenteilnahmeliste() {
+
+		// Projektkopfdaten holen
+		$kopf = $this->getData()->getProjektProbenKopf();
+
+		// Zeile 1: Projekt
+		if (!empty($kopf["projekt"])) {
+			Writing::h2("Projekt " . $kopf["projekt"]);
+		}
+
+		// Zeile 2: Proben bisher
+		if (!empty($kopf["proben"])) {
+			Writing::h5("Proben bisher: " . $kopf["proben"]);
+		}
+
+		// Zeile 3: Teilnahme an X Proben
+		if (!empty($kopf["name"]) && isset($kopf["teilnahmen"])) {
+			Writing::h5("Deine Teilnahmen: " . $kopf["teilnahmen"]);
+		}
+
+		// Tabelle mit Probenliste
+		$data = $this->getData()->getProjektProbenliste();
+
+		$table = new Table($data);
+		// Dynamische Spaltenüberschrift setzen, fallback falls leer
+	$teilnahmeSpaltenname = !empty($kopf["name"]) ? $kopf["name"] : "Teilnahme";
+	$table->renameHeader("J_N", $teilnahmeSpaltenname);
+		$table->renameHeader("PROBE_AM", "Probe");
 		$table->setColumnFormat("probe_am", "DATE");
-		$table->showFilter(true);  // Filter aktivieren
-		$table->write();           // Tabelle anzeigen
+		$table->showFilter(true);
+		$table->write();
 	}
 
 	function probenteilnahmelisteOptions() {
@@ -815,5 +864,6 @@ class StartView extends CrudRefLocationView {
 		$back->addIcon("arrow-left");
 		$back->write();
 	}
+
 }
 ?>

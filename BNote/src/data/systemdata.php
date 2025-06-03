@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Manages System Data
+ * Manages System Data. hL: function getProfilePicturePaths
 **/
 require_once "regex.php";
 require_once "database.php";
@@ -613,6 +613,21 @@ class Systemdata {
  		}
  	}
  	return $this->logoFilename;
+ }
+ 
+  /**
+  * hL: paths to profilePictureFolder
+  */
+ public function getProfilePicturePath() {
+    $urlPath = parse_url($this->getSystemURL(), PHP_URL_PATH); 
+    $folder = $this->cfg_system->getParameter("ProfilePictureFolder"); 
+
+    return rtrim($_SERVER["DOCUMENT_ROOT"], "/") . rtrim($urlPath, "/") . "/" . trim($folder, "/") . "/";
+ }
+public function getProfilePictureUrl($contactId) {
+    $baseUrl = rtrim($this->getSystemURL(), "/");
+    $folder = trim($this->cfg_system->getParameter("ProfilePictureFolder"), "/");
+    return $baseUrl . "/" . $folder . "/" . $contactId . ".jpg";
  }
 }
 

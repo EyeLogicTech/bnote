@@ -1,7 +1,7 @@
 <?php
 
 /**
- * View for rehearsal module. hL: Probenteilnahme Bearbeiten deaktiv Z. 785, 812
+ * View for rehearsal module. hL: btn Probenteilnahme Bearbeiten deaktiv Z. 785, 812. private function writeRehearsalList: Sort Correct. function history sort asc correct.
  * @author matti
  *
  */
@@ -256,55 +256,55 @@ class ProbenView extends CrudRefLocationView {
 		new Message(Lang::txt("ProbenView_processEditSerie.message_1"), Lang::txt("ProbenView_processEditSerie.message_2"));
 	}
 	
-	/**
-	 * Writes out a list with rehearsals.
-	 * @param Array $data Data selection array.
-	 */
-	private function writeRehearsalList($data) {
-		if(count($data) <= 1) {
-			Writing::p(Lang::txt("ProbenView_writeRehearsalList.message"));
-			return;
-		}
-		
-		// combine data in a smart way
-		$displayData = array();
-		array_push($displayData, array(
-			"id", "when", "approve_until", "status", "conductor", "Location"
-		));
-		for($i = 1; $i < count($data); $i++) {
-			array_push($displayData, array(
-				"id" => $data[$i]["id"],
-				"when" => $this->buildWhen($data[$i]["begin"], $data[$i]["end"]),
-				"approve_until" => $data[$i]["approve_until"],
-				"status" => Lang::txt("Proben_status." . $data[$i]["status"]),
-				"conductor" => $data[$i]["conductorname"],
-				"location" => $data[$i]["name"] . "<br>" . $this->formatAddress($data[$i])
-			));
-		}
-		
-		$tab = new Table($displayData);
-		$tab->renameHeader("when", Lang::txt("ProbenView_writeRehearsal.begin"));
-		$tab->renameHeader("approve_until", Lang::txt("ProbenView_addEntity.approve_until"));
-		$tab->renameHeader("status", Lang::txt("ProbenData_construct.status"));
-		$tab->renameHeader("conductor", Lang::txt("ProbenView_addEntity.conductor"));
-		$tab->renameHeader("location", Lang::txt("ProbenView_addEntity.location"));
-		$tab->setEdit("id");
-		$tab->hideColumn("id");
-		$tab->sortColumnByDate("when");
-		$tab->sortColumnByDate("approve_until");
-		$tab->write();
-	}
-	
+
 	private function buildWhen($begin, $end) {
 		$date_end = strtotime($end);
 		$finish = date('H:i', $date_end);
 		return Data::convertDateFromDb($begin) . " - " . $finish;
 	}
-	
-	/**
-	 * Writes out a single rehearsal as text.
-	 * @param Array $row Row with field ids of rehearsal and location as keys (id column of rehearsal).
-	 */
+
+	private function writeRehearsalList($data) {
+    if (count($data) <= 1) {
+        Writing::p(Lang::txt("ProbenView_writeRehearsalList.message"));
+        return;
+    }
+
+    // Sortiere nur die Datenzeilen (ab Index 1), nicht die Kopfzeile
+    $dataToSort = array_slice($data, 1);
+    usort($dataToSort, function($a, $b) {
+        return strtotime($a['begin']) <=> strtotime($b['begin']);
+    });
+    array_splice($data, 1, count($data) - 1, $dataToSort);
+
+    // combine data in a smart way
+    $displayData = array();
+    array_push($displayData, array(
+        "when", "approve_until", "status", "conductor", "location", "id"
+    ));
+    for ($i = 1; $i < count($data); $i++) {
+        array_push($displayData, array(
+            "when" => $this->buildWhen($data[$i]["begin"], $data[$i]["end"]),
+            "approve_until" => $data[$i]["approve_until"],
+            "status" => Lang::txt("Proben_status." . $data[$i]["status"]),
+            "conductor" => $data[$i]["conductorname"],
+            "location" => $data[$i]["name"] . "<br>" . $this->formatAddress($data[$i]),
+            "id" => $data[$i]["id"]
+        ));
+    }
+
+    $tab = new Table($displayData);
+    $tab->renameHeader("when", Lang::txt("ProbenView_writeRehearsal.begin"));
+    $tab->renameHeader("approve_until", Lang::txt("ProbenView_addEntity.approve_until"));
+    $tab->renameHeader("status", Lang::txt("ProbenData_construct.status"));
+    $tab->renameHeader("conductor", Lang::txt("ProbenView_addEntity.conductor"));
+    $tab->renameHeader("location", Lang::txt("ProbenView_addEntity.location"));
+    $tab->setEdit("id");
+    $tab->hideColumn("id");
+    $tab->sortColumnByDate("when");
+    $tab->sortColumnByDate("approve_until");
+    $tab->write();
+}
+
 	private function writeRehearsal($row) {
 		// prepare data
 		$date_begin = strtotime($row["begin"]);
@@ -676,100 +676,64 @@ class ProbenView extends CrudRefLocationView {
 	}
 	
 	function history() {
-		// presets
-		if(isset($_POST["year"])) {
-			$year = $_POST["year"];
-		}
-		else if(isset($_GET["year"])) {
-			$year = $_GET["year"];
-		}
-		else {
-			$year = date("Y");
-		}
-		
-		// filtering
-		$filters = new Filterbox($this->modePrefix() . "history");
-		$rehearsalYears = $this->getData()->getRehearsalYears();
-		$filters->addFilter("year", Lang::txt("ProbenView_history.year"), FieldType::SET, Filterbox::dbSelectionPreparation($rehearsalYears, "year", "year"));
-		$filters->setShowAllOption("year", FALSE);
-		$filters->write();
-		
-		// result
-		Writing::p(Lang::txt("ProbenView_history.message"));
-		
-		$data = $this->getData()->getPastRehearsals($year);
-		$tab = new Table($data);
-		$tab->setEdit("id");
-		$tab->changeMode("view&readonly=true&year=" . $year);
-		$tab->renameAndAlign($this->getData()->getFields());
-		$tab->setColumnFormat("begin", "DATE");
-		$tab->setColumnFormat("end", "DATE");
-		$tab->renameHeader("street", Lang::txt("ProbenView_history.street"));
-		$tab->renameHeader("zip", Lang::txt("ProbenView_history.zip"));
-		$tab->renameHeader("city", Lang::txt("ProbenView_history.city"));
-		$tab->showFilter(FALSE);
-		$tab->write();
-	}
-	
-	function viewTitle() {
-		// title
-		$pdate = $this->getData()->getRehearsalBegin($_GET["id"]);
-		return Lang::txt("ProbenView_view.message_1") . "$pdate" . Lang::txt("ProbenView_view.message_2");
-	}
-	
-	function view() {
-		if($this->isReadOnlyView()) {
-			// history view
-			$this->checkID();
-			Writing::h2(Lang::txt("ProbenView_view.details"));
-			$this->viewDetailTable();
-			$this->participants();
-			
-			Writing::h3(Lang::txt("ProbenView_view.program"));
-			$songs = $this->getData()->getSongsForRehearsal($_GET["id"]);
-			$tab = new Table($songs);
-			$tab->removeColumn("id");
-			$tab->renameHeader("title", Lang::txt("ProbenView_view.title"));
-			$tab->renameHeader("notes", Lang::txt("ProbenView_view.notes"));
-			$tab->write();
-		}
-		else {
-			// tabs
-			$tabs = array(
-				"details" => Lang::txt("ProbenView_view.details"),
-				"invitations" => Lang::txt("ProbenView_view.invitations"),
-				"participants" => Lang::txt("ProbenView_view.participants"),
-				"practise" => Lang::txt("ProbenView_view.practise")
-			);
-			echo "<div class=\"nav nav-tabs\">\n";
-			foreach($tabs as $tabid => $label) {
-				$href = $this->modePrefix() . "view&id=" . $_GET["id"] . "&tab=$tabid";
-				
-				$active = "";
-				if(isset($_GET["tab"]) && $_GET["tab"] == $tabid) $active = "active";
-				else if(!isset($_GET["tab"]) && $tabid == "details") $active = "active";
-			
-				echo "<div class=\"nav-item\"><a href=\"$href\" class=\"nav-link $active\">$label</a></div>";
-			}
-			echo "</div>\n";
-			echo "<div class=\"view_tab_content\">\n";
-			
-			// content
-			if(!isset($_GET["tab"]) || $_GET["tab"] == "details") {
-				$this->viewDetailTable();
-			}
-			else if($_GET["tab"] == "invitations") {
-				$this->invitations();
-			}
-			else if($_GET["tab"] == "participants") {
-				$this->participants();
-			}
-			else if($_GET["tab"] == "practise") {
-				$this->practise();
-			}
-			
-			echo "</div>\n";
-		}
+    // Jahr bestimmen
+    $year = $_POST["year"] ?? $_GET["year"] ?? date("Y");
+
+    // Filterbox schreiben
+    $filters = new Filterbox($this->modePrefix() . "history");
+    $rehearsalYears = $this->getData()->getRehearsalYears();
+    $filters->addFilter(
+        "year",
+        Lang::txt("ProbenView_history.year"),
+        FieldType::SET,
+        Filterbox::dbSelectionPreparation($rehearsalYears, "year", "year")
+    );
+    $filters->setShowAllOption("year", false);
+    $filters->write();
+
+    // Infotext
+    Writing::p(Lang::txt("ProbenView_history.message"));
+
+    // Daten holen
+    $rawData = $this->getData()->getPastRehearsals($year);
+
+    // Header + Daten
+    $displayData = [];
+    $displayData[] = ["begin", "end", "location", "street", "zip", "city", "id"];
+
+    foreach ($rawData as $row) {
+        if (!isset($row["begin"])) continue;
+        $displayData[] = [
+            "begin" => $row["begin"],
+            "end" => $row["end"],
+            "location" => $row["Location"],
+            "street" => $row["street"],
+            "zip" => $row["zip"],
+            "city" => $row["city"],
+            "id" => $row["id"],
+        ];
+    }
+
+    // Optional: sortiere ASC nach "begin"
+    $dataToSort = array_slice($displayData, 1);
+    usort($dataToSort, function ($a, $b) {
+        return strtotime($a["begin"]) <=> strtotime($b["begin"]);
+    });
+    array_splice($displayData, 1, count($displayData) - 1, $dataToSort);
+
+    // Tabelle erzeugen
+    $tab = new Table($displayData);
+    $tab->renameHeader("begin", "Beginn");
+    $tab->renameHeader("end", "Ende");
+    $tab->renameHeader("location", "Ort");
+    $tab->renameHeader("street", "Straße");
+    $tab->renameHeader("zip", "PLZ");
+    $tab->renameHeader("city", "Stadt");
+    $tab->setEdit("id");
+    $tab->hideColumn("id");
+    $tab->showFilter(false);
+    $tab->sortColumnByDate("begin");
+    $tab->write();
 	}
 	
 	function viewOptions() {

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Data Access Class for finance data.
+ * Data Access Class for finance data. hL: sepa-einzugdaten ab Z239
  * @author matti
  *
  */
@@ -234,6 +234,35 @@ class FinanceData extends AbstractData {
 		$query = "select * from sepa_liste_gls";
 		$result = $this->database->getSelection($query);
 		return $result;
+	}
+	
+	function getEinzugperiodeVon() {
+	$query = "SELECT strval FROM customfield_value WHERE customfield = 6 AND otype = 'c' AND oid = 100";
+	return $this->database->colValue($query, "strval", array());
+	}
+	function getEinzugperiodeBis() {
+	$query = "SELECT strval FROM customfield_value WHERE customfield = 7 AND otype = 'c' AND oid = 100";
+	return $this->database->colValue($query, "strval", array());
+	}
+	function getEinzugSumme() {
+	$query = "SELECT SUM(BEITRAG) AS betrag_summe FROM sepa_liste_bnote";
+	return (float)$this->database->colValue($query, "betrag_summe", array());
+	}
+	function getBancantaIBAN() {
+	$query = "SELECT strval FROM customfield_value WHERE customfield = 8 AND otype = 'c' AND oid = 100";
+	return $this->database->colValue($query, "strval", array());
+	}
+	function getBancantaGlaeubigerID() {
+	$query = "SELECT strval FROM customfield_value WHERE customfield = 10 AND otype = 'c' AND oid = 100";
+	return $this->database->colValue($query, "strval", array());
+	}
+	function updateMetaField($customfield, $value) {
+	$query = "UPDATE customfield_value SET strval = ? WHERE customfield = ? AND otype = 'c' AND oid = 100";
+	$params = array(
+		array("s", $value),
+		array("i", $customfield)
+	);
+	$this->database->execute($query, $params);
 	}
 }
 
