@@ -1,6 +1,6 @@
 <?php
 /**
- * View for user module. hL Z 43, 195, 249, 263 ModulBerechtigungen
+ * View for user module. hL ModulBerechtigungen. Mit FilterCounter
  * @author matti
  *
  */
@@ -19,25 +19,26 @@ class UserView extends CrudRefView {
 	}
 
 	function start() {
-		Writing::p(Lang::txt("UserView_start.message"));
-		
-		// show all users
-		$table = new Table($this->getData()->getUsers());
-		$table->setEdit("id");
-		$table->renameAndAlign($this->getData()->getFields());
-		$table->renameHeader("contactsurname", Lang::txt("UserView_start.contactsurname"));
-		$table->renameHeader("contactname", Lang::txt("UserView_start.contactname"));
-		$table->renameHeader("isactive", Lang::txt("UserView_start.isactive"));
-		$table->write();
+	Writing::p(Lang::txt("UserView_start.message"));
+
+	$table = new Table($this->getData()->getUsers());
+	$table->setEdit("id");
+	$table->renameAndAlign($this->getData()->getFields());
+	$table->renameHeader("contactsurname", Lang::txt("UserView_start.contactsurname"));
+	$table->renameHeader("contactname", Lang::txt("UserView_start.contactname"));
+	$table->renameHeader("isactive", Lang::txt("UserView_start.isactive"));
+
+	$tableId = $table->write(); // gibt automatisch generierte ID zurück
+
 	}
 	
 	function startOptions() {
 		parent::startOptions();
-    
+	
 		$gdpr = new Link($this->modePrefix() . "gdpr", Lang::txt("UserView_startOptions.question"));
 		$gdpr->addIcon("question");
 		$gdpr->write();
-    
+	
 		$moduleRights = new Link($this->modePrefix() . "moduleRights", "Modulberechtigungen");
 		$moduleRights->addIcon("lock");
 		$moduleRights->write();
@@ -250,24 +251,29 @@ class UserView extends CrudRefView {
 		$inactiveUsersList->setNameField("login");
 		$inactiveUsersList->write();
 	}
-
-	function moduleRights() {
-		// Überschrift
-		Writing::h1("Modulrechte Übersicht");
-		// Hinweistext
-		Writing::p("Tippe einen User-Namen in die Filterbox – dann werden die Module gelistet, für die der User berechtigt ist. Tippe einen Modul-Namen in die Filterbox – dann werden die User gelistet, die für das Modul berechtigt sind.");
-		// Rohdaten laden
-		$rights = $this->getData()->getModuleRights();
-		// Tabelle erzeugen (keine Spaltenänderungen)
-		$table = new Table($rights);
-		$table->write();
-	}
+	
 	protected function moduleRightsOptions() {
 		// Nur Zurück-Button
 		$back = new Link($this->modePrefix() . "start", "Zurück");
 		$back->addIcon("arrow-left");
 		$back->write();
+	}	
+
+	function moduleRights() {
+	Writing::h1("Modulrechte Übersicht");
+
+	Writing::p("Tippe einen User-Namen in die Filterbox – dann werden die Module gelistet, für die der User berechtigt ist. "
+		. "Tippe einen Modul-Namen in die Filterbox – dann werden die User gelistet, die für das Modul berechtigt sind.");
+
+	$rights = $this->getData()->getModuleRights();
+
+	$table = new Table($rights);
+	$table->setEdit("ID");		 // ID aus der View
+	$table->setModId(2);		   // Modul-ID des User-Moduls
+	$table->hideColumn("id");	   // Optional: Spalte unsichtbar machen
+	$table->write();
 	}
+
 }
 
 ?>

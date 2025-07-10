@@ -1,8 +1,10 @@
 <?php
 
+require_once(dirname(__FILE__) . "/../../data/modules/programdata.php");
+
 /**
  * View for rehearsal module. hL: btn Probenteilnahme Bearbeiten deaktiv Z. 785, 812. private function writeRehearsalList: Sort Correct. function history sort asc correct.
- * @author matti
+ * @author matti /hL:tabs Details, Teilnehmer (unnötige btn entfernt), Aktive Stücke zum Üben und history/Bancanta Teilnahme bearbeiten.
  *
  */
 class ProbenView extends CrudRefLocationView {
@@ -303,7 +305,7 @@ class ProbenView extends CrudRefLocationView {
     $tab->sortColumnByDate("when");
     $tab->sortColumnByDate("approve_until");
     $tab->write();
-}
+	}
 
 	private function writeRehearsal($row) {
 		// prepare data
@@ -552,6 +554,7 @@ class ProbenView extends CrudRefLocationView {
 		$table->write();
 		
 		// remaining calls
+		/*
 		Writing::h4(Lang::txt("ProbenView_participants.title_3"), "mt-3");
 		$openTab = new Table($this->getData()->getOpenParticipation($_GET["id"]));
 		$openTab->showFilter(false);
@@ -561,7 +564,7 @@ class ProbenView extends CrudRefLocationView {
 		$openTab->renameHeader("nickname", Lang::txt("ProbenView_participants.nickname_2"));
 		$openTab->renameHeader("mobile", Lang::txt("ProbenView_participants.mobile"));
 		$openTab->write();
-		
+		*/
 		Writing::h4(Lang::txt("ProbenView_participants.title_4"), "mt-3");
 		$dv = new Dataview();
 		$dv->autoAddElements($this->getData()->getParticipantStats($_GET["id"]));
@@ -577,53 +580,62 @@ class ProbenView extends CrudRefLocationView {
 	}
 	
 	function practise() {
-		$this->checkID();
-		Writing::h4(Lang::txt("ProbenView_practise.title"), "mt-3");
-		
-		// check if a new song was added
-		if(isset($_POST["song"])) {
-			$this->getData()->saveSongForRehearsal($_POST["song"], $_GET["id"], $_POST["notes"]);
-		}
-		
-		// show songs
-		$songs = $this->getData()->getSongsForRehearsal($_GET["id"]);
-		echo "<div>\n";
-		for($i = 1; $i < count($songs); $i++) {
-			$s = $songs[$i];
-			$href = $this->modePrefix() . "practise&id=" . $_GET["id"];
-			$href .= "&song=" . $s["id"];
-			$caption = $s["title"];
-			echo "<div class=\"practise card p-2 mb-2\"><a href=\"$href\" class=\"card-title\">$caption</a>";
-			// show options if required
-			if(isset($_GET["song"]) && $_GET["song"] == $s["id"]) {
-				echo '<form method="POST" action="' . $this->modePrefix();
-				echo 'practiseUpdate&id=' . $_GET["id"] . '&song=' . $s["id"] . '">';
-				echo ' <input type="text" name="notes" size="30" value="' . $s["notes"] . '" />';
-				echo ' <input type="submit" value="' . Lang::txt("ProbenView_practise.save") . '" />';
-				$del = new Link($this->modePrefix() .
-					"practiseDelete&id=" . $_GET["id"] . "&song=" . $s["id"] . "&tab=practise", Lang::txt("ProbenView_practise.delete"));
-				$del->write();
-				echo '</form>';
-			}
-			else {
-				echo $s["notes"];
-			}
-			echo "</div>\n";
-		}
-		if(count($songs) == 1) {
-			echo "<div>" . Lang::txt("ProbenView_practise.no_song") . "</div>\n";
-		}
-		echo "</div>\n";
-		
-		// add a song
-		$form = new Form(Lang::txt("ProbenView_practise.Form"), $this->modePrefix() . "view&tab=practise&id=" . $_GET["id"]);
-		$form->addElement("song", new Field("song", "", FieldType::REFERENCE));
-		$form->setForeign("song", "song", "id", "title", -1, true);
-		$form->renameElement("song", Lang::txt("ProbenView_practise.song"));
-		$form->addElement(Lang::txt("ProbenView_practise.notes"), new Field("notes", "", FieldType::CHAR));
-		$form->write();
+    $this->checkID();
+    Writing::h4(Lang::txt("ProbenView_practise.title"), "mt-3");
+    Writing::p('Füge aus der Dropdown-Box ein Stück hinzu und klicke auf OK. Um das Stück wieder zu entfernen oder um einen Übehinweis zu setzen, klicke auf das Stück.');
+    // check if a new song was added
+    if(isset($_POST["song"])) {
+        $this->getData()->saveSongForRehearsal($_POST["song"], $_GET["id"], $_POST["notes"]);
+    }
+    
+    // show songs
+    $songs = $this->getData()->getSongsForRehearsal($_GET["id"]);
+    echo "<div>\n";
+    for($i = 1; $i < count($songs); $i++) {
+        $s = $songs[$i];
+        $href = $this->modePrefix() . "practise&id=" . $_GET["id"];
+        $href .= "&song=" . $s["id"];
+        $caption = $s["title"];
+        echo "<div class=\"practise card p-2 mb-2\"><a href=\"$href\" class=\"card-title\">$caption</a>";
+        // show options if required
+        if(isset($_GET["song"]) && $_GET["song"] == $s["id"]) {
+            echo '<form method="POST" action="' . $this->modePrefix();
+            echo 'practiseUpdate&id=' . $_GET["id"] . '&song=' . $s["id"] . '">';
+            echo ' <input type="text" name="notes" size="30" value="' . $s["notes"] . '" />';
+            echo ' <input type="submit" value="' . Lang::txt("ProbenView_practise.save") . '" />';
+            $del = new Link($this->modePrefix() .
+                "practiseDelete&id=" . $_GET["id"] . "&song=" . $s["id"] . "&tab=practise", Lang::txt("ProbenView_practise.delete"));
+            $del->write();
+            echo '</form>';
+        }
+        else {
+            echo $s["notes"];
+        }
+        echo "</div>\n";
+    }
+    if(count($songs) == 1) {
+        echo "<div>" . Lang::txt("ProbenView_practise.no_song") . "</div>\n";
+    }
+    echo "</div>\n";
+    
+    // add a song (Dropdown nur mit aktiven Songs)
+    $programData = new ProgramData();
+    $songs = $programData->getActiveSongs();
+    $options = array();
+    for ($i = 1; $i < count($songs); $i++) {
+        $options[$songs[$i]["id"]] = $songs[$i]["title"];
+    }
+    $songDropdown = new Dropdown("song");
+    foreach ($options as $id => $title) {
+        $songDropdown->addOption($title, $id);
+    }
+    $form = new Form(Lang::txt("ProbenView_practise.Form"), $this->modePrefix() . "view&tab=practise&id=" . $_GET["id"]);
+    // $form->addElement(Lang::txt("ProbenView_practise.song"), $songDropdown);
+    $form->addElement("(Im Modul Repertoire als Aktuell = ja gesetzte Stücke)", $songDropdown);
+    $form->addElement(Lang::txt("ProbenView_practise.notes"), new Field("notes", "", FieldType::CHAR));
+    $form->write();
 	}
-	
+
 	function practiseOptions() {
 		$this->backToViewButton($_GET["id"]);
 	}
@@ -730,52 +742,98 @@ class ProbenView extends CrudRefLocationView {
     $tab->renameHeader("zip", "PLZ");
     $tab->renameHeader("city", "Stadt");
     $tab->setEdit("id");
+    $tab->changeMode("view&readonly=true&year=" . $year);
     $tab->hideColumn("id");
     $tab->showFilter(false);
     $tab->sortColumnByDate("begin");
     $tab->write();
 	}
 	
-	function viewOptions() {
+	function viewTitle() {
+		// title
+		$pdate = $this->getData()->getRehearsalBegin($_GET["id"]);
+		return Lang::txt("ProbenView_view.message_1") . "$pdate" . Lang::txt("ProbenView_view.message_2");
+	}
+	
+	function view() {
 		if($this->isReadOnlyView()) {
-			$back = new Link($this->modePrefix() . "history&year=" . $_GET["year"], Lang::txt("ProbenView_viewOptions.back"));
-			$back->addIcon("arrow-left");
-			$back->write();
-
-			$bcParticipation = new Link($this->modePrefix() . "bccheckin&id=" . $_GET["id"], "Bancanta Teilnahme bearbeiten");
-			$bcParticipation->addIcon("bank2");
-			$bcParticipation->write();
-
-		}
-		else if(!isset($_GET["tab"]) || $_GET["tab"] == "details") {
-			parent::viewOptions();
+			// history view
+			$this->checkID();
+			Writing::h2(Lang::txt("ProbenView_view.details"));
+			$this->viewDetailTable();
+			$this->participants();
 			
-			$bcParticipation = new Link($this->modePrefix() . "bccheckin&id=" . $_GET["id"], "Bancanta Checkin");
-			$bcParticipation->addIcon("bank2");
-			$bcParticipation->write();
-
-			// show a button to send a reminder to all about this rehearsal
-			$remHref = "?mod=" . $this->getData()->getSysdata()->getModuleId("Kommunikation") . "&mode=rehearsalMail&preselect=" . $_GET["id"];
-
-			$reminder = new Link($remHref, Lang::txt("ProbenView_viewOptions.remHref"));
-			$reminder->addIcon("email");
-			$reminder->write();
-		}
-		else if(isset($_GET["tab"]) && ($_GET["tab"] == "invitations" || $_GET["tab"] == "participants")) {
-			$this->backToStart();
-			
-			$addContact = new Link($this->modePrefix() . "addContact&id=" . $_GET["id"], Lang::txt("ProbenView_viewOptions.addContact"));
-			$addContact->addIcon("plus");
-			$addContact->write();
-			
-				
-			$printPartlist = new Link($this->modePrefix() . "printPartlist&id=" . $_GET["id"], Lang::txt("ProbenView_viewOptions.printPartlist"));
-			$printPartlist->addIcon("printer");
-			$printPartlist->write();
+			Writing::h3(Lang::txt("ProbenView_view.program"));
+			$songs = $this->getData()->getSongsForRehearsal($_GET["id"]);
+			$tab = new Table($songs);
+			$tab->removeColumn("id");
+			$tab->renameHeader("title", Lang::txt("ProbenView_view.title"));
+			$tab->renameHeader("notes", Lang::txt("ProbenView_view.notes"));
+			$tab->write();
 		}
 		else {
-			$this->backToStart();
+			// tabs
+			$tabs = array(
+				"details" => Lang::txt("ProbenView_view.details"),
+				//"invitations" => Lang::txt("ProbenView_view.invitations"),
+				"participants" => Lang::txt("ProbenView_view.participants"),
+				"practise" => Lang::txt("ProbenView_view.practise")
+			);
+			echo "<div class=\"nav nav-tabs\">\n";
+			foreach($tabs as $tabid => $label) {
+				$href = $this->modePrefix() . "view&id=" . $_GET["id"] . "&tab=$tabid";
+				
+				$active = "";
+				if(isset($_GET["tab"]) && $_GET["tab"] == $tabid) $active = "active";
+				else if(!isset($_GET["tab"]) && $tabid == "details") $active = "active";
+			
+				echo "<div class=\"nav-item\"><a href=\"$href\" class=\"nav-link $active\">$label</a></div>";
+			}
+			echo "</div>\n";
+			echo "<div class=\"view_tab_content\">\n";
+			
+			// content
+			if(!isset($_GET["tab"]) || $_GET["tab"] == "details") {
+				$this->viewDetailTable();
+			}
+			else if($_GET["tab"] == "invitations") {
+				$this->invitations();
+			}
+			else if($_GET["tab"] == "participants") {
+				$this->participants();
+			}
+			else if($_GET["tab"] == "practise") {
+				$this->practise();
+			}
+			
+			echo "</div>\n";
 		}
+	}
+	
+	function viewOptions() {
+    if($this->isReadOnlyView()) {
+        $back = new Link($this->modePrefix() . "history&year=" . $_GET["year"], Lang::txt("ProbenView_viewOptions.back"));
+        $back->addIcon("arrow-left");
+        $back->write();
+
+        $bcParticipation = new Link($this->modePrefix() . "bccheckin&id=" . $_GET["id"], "Bancanta Teilnahme bearbeiten");
+        $bcParticipation->addIcon("bank2");
+        $bcParticipation->write();
+
+    }
+    else if(!isset($_GET["tab"]) || $_GET["tab"] == "details") {
+        parent::viewOptions();
+        
+        $bcParticipation = new Link($this->modePrefix() . "bccheckin&id=" . $_GET["id"], "Bancanta Checkin");
+        $bcParticipation->addIcon("bank2");
+        $bcParticipation->write();
+    }
+    else if(isset($_GET["tab"]) && ($_GET["tab"] == "invitations" || $_GET["tab"] == "participants")) {
+        $this->backToStart();
+    }
+    else {
+        $this->backToStart();
+    }
 	}
 	
 	function overview() {
@@ -989,10 +1047,15 @@ class ProbenView extends CrudRefLocationView {
 	}
 	
 	function bccheckinOptions() {
-		$this->backToViewButton($_GET["id"]);
-		$seriesEdit = new Link($this->modePrefix() . "close&id=" . $_GET["id"], "Anmeldung beenden");
-		$seriesEdit->addIcon("x-circle");
-		$seriesEdit->write();
+    $year = $_GET["year"] ?? date("Y");
+    $link = $this->modePrefix() . "history&year=" . $year;
+    $back = new Link($link, Lang::txt("ProbenView_viewOptions.back"));
+    $back->addIcon("arrow-left");
+    $back->write();
+
+    $seriesEdit = new Link($this->modePrefix() . "close&id=" . $_GET["id"], "Anmeldung beenden");
+    $seriesEdit->addIcon("x-circle");
+    $seriesEdit->write();
 	}
 
 	function close() {

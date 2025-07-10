@@ -6,7 +6,7 @@
  * accessing database information. This is the central class
  * used to access entity information and can be the superclass of
  * a hierachy which acts as an ORM framework.
- * @author matti
+ * @author matti. hL: bugfix function getContacts() 
  *
  */
 class ApplicationDataProvider {
@@ -276,7 +276,7 @@ class ApplicationDataProvider {
 	}
 	
 	/**
-	 * Returns all contacts with addresses and instruments.
+	 * Returns all contacts with addresses and instruments. 
 	 */
 	public function getContacts() {
 		$query = "SELECT c2.*, i.name as instrumentname ";
@@ -287,17 +287,17 @@ class ApplicationDataProvider {
 		$query .= "  ON c.address = a.id) as c2 ";
 		$query .= "LEFT OUTER JOIN instrument i ON c2.instrument = i.id ";
 		
-		// filter out super users
+		// filter out super users. hL: bugfix
 		$suContacts = $this->sysdata->getSuperUserContactIDs();
 		$params = array();
 		
 		if(count($suContacts) > 0 && !$this->sysdata->isUserSuperUser()) {
 			$sus = array();			
 			foreach($suContacts as $suc) {
-				$sus = "c2.id <> ?";
-				array_push($params, array("i", $suc));
-			}
-			$query .= "WHERE " . join(" AND ", $sus);
+		$sus[] = "c2.id <> ?";
+		$params[] = array("i", $suc);
+		}
+		$query .= "WHERE " . join(" AND ", $sus);
 		}
 		
 		// order contacts

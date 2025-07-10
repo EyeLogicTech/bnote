@@ -86,7 +86,7 @@ class ProgramView extends CrudView {
 		$table->removeColumn("psid");
 		$table->renameHeader("rank", Lang::txt("ProgramView_viewDetailTable.rank"));
 		$table->renameHeader("title", Lang::txt("ProgramView_viewDetailTable.title"));
-		$table->renameHeader("composer", Lang::txt("ProgramView_viewDetailTable.title"));
+		$table->renameHeader("composer", Lang::txt("ProgramView_viewDetailTable.composer"));
 		$table->renameHeader("length", Lang::txt("ProgramView_viewDetailTable.length"));
 		$table->renameHeader("notes", Lang::txt("ProgramView_viewDetailTable.notes"));
 		$table->write();

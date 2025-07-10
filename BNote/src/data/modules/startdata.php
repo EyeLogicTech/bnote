@@ -2,7 +2,7 @@
 
 /**
  * Data Access Class for Start data.
- * @author matti, hL: function probenteilnahmeliste Z616
+ * @author matti, hL: function probenteilnahmeliste Z616, getReplyUntilForParticipation. typo 347 fixed
  *
  */
 class StartData extends AbstractLocationData {
@@ -344,7 +344,7 @@ class StartData extends AbstractLocationData {
 				if($i == 0) continue;
 				$contact = $this->adp()->getUserContact($user["id"]);
 				if($contact != null) {
-					arary_push($whereQ, "id = ?");
+					array_push($whereQ, "id = ?");
 					array_push($params, array("i", $contact));
 				}
 			}
@@ -654,7 +654,19 @@ class StartData extends AbstractLocationData {
 			"j_n" => null
 		);
 	}
-}
+	}
 	
+	public function getReplyUntilForParticipation($otype, $oid) {
+    if ($otype === "R") {
+        $rehearsal = $this->getRehearsal($oid);
+        return $rehearsal["approve_until"] ?? null;
+    }
+    if ($otype === "C") {
+        $concert = $this->getConcert($oid);
+        return $concert["approve_until"] ?? null;
+    }
+    // Optional: für andere Typen null oder "-" zurückgeben
+    return null;
+	}
 }
 ?>

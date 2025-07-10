@@ -1,7 +1,7 @@
 <?php
 
 /**
- * View for contact module. hL: import/export-buttons deaktiv zeile 60. zuordnung zu rehearsalphases deaktiv Zeile 605. probenteilnahmen
+ * View for contact module. hL: import/export-buttons deaktiv zeile 60. zuordnung zu rehearsalphases deaktiv Zeile 605. probenteilnahmen, table.php mit filterCounter 
  * @author matti
  *
  */
@@ -78,124 +78,101 @@ class KontakteView extends CrudRefLocationView {
 		// write
 		$this->showContactTable($data);
 	}
-	
-	private function showContactTable($data) {
-		$groups = $this->getData()->getGroups();
-		
-		// show groups as tabs
-		echo "<div class=\"contact_view\">";
-		echo " <div class=\"nav nav-tabs\">";
-		foreach($groups as $cmd => $info) {
-			if($cmd == 0) {
-				// instead of skipping the first header-row,
-				// insert a tab with all contacts
-				$cmd = "all";
-				$info = array("name" => Lang::txt("KontakteView_showContactTable.all"), "id" => "all");
-			}
-			$label = $info["name"];
-			$groupId = $info["id"];
-			
-			$active = "";
-			if(isset($_GET["group"]) && $_GET["group"] == $groupId) $active = "active";
-			else if(!isset($_GET["group"]) && $groupId == 2) $active = "active";
-			
-			echo "<div class=\"nav-item\">";
-			echo " <a class=\"nav-link $active\" href=\"" . $this->modePrefix() . "start&group=$groupId\">$label</a>";
-			echo "</div>";
-		}
-		echo " </div>";
-		
-		// show data
-		echo " <table id=\"contact_table\" class=\"table contact_view\">\n";
-		foreach($data as $i => $row) {
-					
-			if($i == 0) {
-				// header
-				echo "<thead>";
-				echo "   <th class=\"DataTable_Header\">" . Lang::txt("KontakteView_showContactTable.name") . "</th>";
-				echo "   <th class=\"DataTable_Header\">" . Lang::txt("KontakteView_showContactTable.music") . "</th>";
-				echo "   <th class=\"DataTable_Header\">" . Lang::txt("KontakteView_showContactTable.adress") . "</th>";
-				echo "   <th class=\"DataTable_Header\">" . Lang::txt("KontakteView_showContactTable.phone") . "</th>";
-				echo "   <th class=\"DataTable_Header\">" . Lang::txt("KontakteView_showContactTable.online") . "</th>";
-				echo "</thead>";
-				echo "<tbody>";
-			}
-			else {
-				echo "  <tr>\n";
-				// body
-				$names = array();
-				if($row["surname"] != "") array_push($names, $row["surname"]);
-				if($row["name"] != "") array_push($names, $row["name"]);
-				$contact_name = join(", ", $names);
-				if($row['nickname'] != "") {
-					$contact_name .= "<br/>(" . $row['nickname'] . ")";
-				}
-				echo "   <td class=\"DataTable\"><a href=\"" . $this->modePrefix() . "view&id=" . $row["id"] . "\">$contact_name</a></td>";
-				
-				// instrument, conductor
-				echo "   <td class=\"DataTable\">". Lang::txt("KontakteView_showContactTable.instrumentname") . $row["instrumentname"];
-				if(isset($row["is_conductor"])) {
-					echo "<br>". Lang::txt("KontakteView_showContactTable.is_conductor");
-					echo $row["is_conductor"] == "1" ? Lang::txt("KontakteView_showContactTable.yes") : Lang::txt("KontakteView_showContactTable.no");
-				}
-				echo "</td>";
-				
-				echo "   <td class=\"DataTable\" style=\"width: 150px;\">" . $this->formatAddress($row, TRUE, "", TRUE) . "</td>";
-				
-				// phones
-				$phones = "";
-				if($row["phone"] != "") {
-					$phones .= Lang::txt("KontakteView_showContactTable.phone") . $row["phone"];
-				}
-				if($row["mobile"] != "") {
-					if($phones != "") $phones .= "<br/>";
-					$phones .= Lang::txt("KontakteView_showContactTable.mobile") . $row["mobile"]; 
-				}
-				if($row["business"] != "") {
-					if($phones != "") $phones .= "<br/>";
-					$phones .= Lang::txt("KontakteView_showContactTable.business") . $row["business"];
-				}
-				echo "   <td class=\"DataTable\" style=\"width: 150px;\">$phones</td>";
-				
-				// online
-				echo "   <td class=\"DataTable\"><a href=\"mailto:" . $row["email"] . "\">" . $row["email"] . "</a>";
-				if($row["web"] != "") {
-					echo "<br/><a href=\"https://" . $row["web"] . "\" target=\"_blank\">" . $row["web"] . "</a>";
-				} 
-				echo "</td>";
-			}
-			
-			echo "  </tr>";
-		}
-		// show "no entries" row when this is the case
-		if(count($data) == 1) {
-			echo "<tr><td colspan=\"5\">" . Lang::txt("KontakteView_showContactTable.no_entries") . "</td></tr>\n";
-		}
-		
-		echo "</tbody>";
-		echo "</table>\n";
-		echo "</div>";
 
-		?>
-			<script>
-		
-		// convert table to javasript DataTable
-		$(document).ready(function() {
-			var identifier = "#contact_table";
-    		$(identifier).DataTable({
-				 "paging": false, 
-				 "info": false,  
-				 "responsive": true,
-				 "oLanguage": {
-					 		 "sEmptyTable":  "<?php echo Lang::txt("KontakteView_showContactTable.sEmptyTable"); ?>",
-							 "sInfoEmpty":  "<?php echo Lang::txt("KontakteView_showContactTable.sInfoEmpty"); ?>",
-							 "sZeroRecords":  "<?php echo Lang::txt("KontakteView_showContactTable.sZeroRecords"); ?>",
-        					 "sSearch": "<?php echo Lang::txt("KontakteView_showContactTable.sSearch"); ?>"
-		       }
-			});
-	});
-		</script>
-		<?php
+	private function showContactTable($data) {
+	$groups = $this->getData()->getGroups();
+
+	// show groups as tabs
+	echo "<div class=\"contact_view\">";
+	echo " <div class=\"nav nav-tabs\">";
+	foreach ($groups as $cmd => $info) {
+		if ($cmd == 0) {
+			$cmd = "all";
+			$info = array("name" => Lang::txt("KontakteView_showContactTable.all"), "id" => "all");
+		}
+		$label = $info["name"];
+		$groupId = $info["id"];
+
+		$active = "";
+		if (isset($_GET["group"]) && $_GET["group"] == $groupId) $active = "active";
+		else if (!isset($_GET["group"]) && $groupId == 2) $active = "active";
+
+		echo "<div class=\"nav-item\">";
+		echo " <a class=\"nav-link $active\" href=\"" . $this->modePrefix() . "start&group=$groupId\">$label</a>";
+		echo "</div>";
+	}
+	echo " </div>";
+
+	// Daten formatieren
+	$formatted = array();
+	$formatted[] = array("Name", "Musik", "Adresse", "Telefon", "Online", "id"); // Header
+
+	foreach ($data as $i => $row) {
+		if ($i === 0 || !is_array($row) || !isset($row["id"])) continue;
+
+		$names = array();
+		if (!empty($row["surname"])) $names[] = $row["surname"];
+		if (!empty($row["name"])) $names[] = $row["name"];
+		$contact_name = implode(", ", $names);
+		if (!empty($row["nickname"])) {
+			$contact_name .= "<br/>(" . $row["nickname"] . ")";
+		}
+		$contact_name = '<a href="' . $this->modePrefix() . 'view&id=' . $row["id"] . '">' . $contact_name . '</a>';
+
+		$music = Lang::txt("KontakteView_showContactTable.instrumentname") . ($row["instrumentname"] ?? '');
+		if (isset($row["is_conductor"])) {
+			$music .= "<br>" . Lang::txt("KontakteView_showContactTable.is_conductor");
+			$music .= $row["is_conductor"] == "1"
+				? Lang::txt("KontakteView_showContactTable.yes")
+				: Lang::txt("KontakteView_showContactTable.no");
+		}
+
+		$address = $this->formatAddress($row, true, "", true);
+
+		$phones = "";
+		if (!empty($row["phone"])) {
+			$phones .= Lang::txt("KontakteView_showContactTable.phone") . $row["phone"];
+		}
+		if (!empty($row["mobile"])) {
+			if ($phones != "") $phones .= "<br/>";
+			$phones .= Lang::txt("KontakteView_showContactTable.mobile") . $row["mobile"];
+		}
+		if (!empty($row["business"])) {
+			if ($phones != "") $phones .= "<br/>";
+			$phones .= Lang::txt("KontakteView_showContactTable.business") . $row["business"];
+		}
+
+		$online = "";
+		if (!empty($row["email"])) {
+			$online .= "<a href=\"mailto:" . $row["email"] . "\">" . $row["email"] . "</a>";
+		}
+		if (!empty($row["web"])) {
+			$online .= "<br/><a href=\"https://" . $row["web"] . "\" target=\"_blank\">" . $row["web"] . "</a>";
+		}
+
+		$formatted[] = array(
+			"Name" => $contact_name,
+			"Musik" => $music,
+			"Adresse" => $address,
+			"Telefon" => $phones,
+			"Online" => $online,
+			"id" => $row["id"]
+		);
+	}
+
+	// Tabelle erzeugen
+	$table = new Table($formatted);
+	//$table->setEdit("id"); Klick auf Zeile deaktiv
+	$table->setModId(2); // Modul-ID für Benutzerverwaltung (anpassen falls nötig)
+	$table->hideColumn("id");
+	$table->renameHeader("Name", Lang::txt("KontakteView_showContactTable.name"));
+	$table->renameHeader("Musik", Lang::txt("KontakteView_showContactTable.music"));
+	$table->renameHeader("Adresse", Lang::txt("KontakteView_showContactTable.adress"));
+	$table->renameHeader("Telefon", Lang::txt("KontakteView_showContactTable.phone"));
+	$table->renameHeader("Online", Lang::txt("KontakteView_showContactTable.online"));
+	$table->write();
+
+	echo "</div>";
 	}
 	
 	function addEntity() {		
@@ -811,24 +788,24 @@ class KontakteView extends CrudRefLocationView {
 	}
 	
 	function showProbenteilnahmen() {
-    $cid = $_GET["id"];
-    $data = $this->getData()->getProbenteilnahmen($cid);
-    $name = $this->getData()->getProbenTeilnehmerName($cid);
+	$cid = $_GET["id"];
+	$data = $this->getData()->getProbenteilnahmen($cid);
+	$name = $this->getData()->getProbenTeilnehmerName($cid);
 
-    Writing::h3("Probenteilnahmen von " . $name);
+	Writing::h3("Probenteilnahmen von " . $name);
 
-    if (count($data) <= 1) {
-        Writing::p("Keine Proben gefunden.");
-        return;
-    }
+	if (count($data) <= 1) {
+		Writing::p("Keine Proben gefunden.");
+		return;
+	}
 
-    $table = new Table($data);
-    $table->setColumnFormat("probe_am", "DATE");
-    $table->renameHeader("JAHR", "Jahr");
-    $table->renameHeader("PROBE_AM", "Probe");
-    $table->renameHeader("TEILGENOMMEN", "Teilnahme");
-    $table->renameHeader("PROJEKT", "Projekt");
-    $table->write();
+	$table = new Table($data);
+	$table->setColumnFormat("probe_am", "DATE");
+	$table->renameHeader("JAHR", "Jahr");
+	$table->renameHeader("PROBE_AM", "Probe");
+	$table->renameHeader("TEILGENOMMEN", "Teilnahme");
+	$table->renameHeader("PROJEKT", "Projekt");
+	$table->write();
 	}
 }
 

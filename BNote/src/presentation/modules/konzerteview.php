@@ -2,7 +2,7 @@
 
 /**
  * View for concert module.
- * @author matti
+ * @author matti. hL: bugfix editParticipation. btn entfernt additionalViewButtons
  *
  */
 class KonzerteView extends CrudRefLocationView {
@@ -403,37 +403,25 @@ class KonzerteView extends CrudRefLocationView {
 	}
 	
 	function additionalViewButtons() {
-		$concert_id = $_GET["id"];
-		
-		$partLink = new Link($this->modePrefix() . "showParticipants&id=$concert_id", Lang::txt("KonzerteView_viewButtons.showParticipants"));
-		$partLink->addIcon("person-lines-fill");
-		$partLink->write();
-		
-		// concert contact
-		$addContact = new Link($this->modePrefix() . "addConcertContact&id=$concert_id", Lang::txt("KonzerteView_viewButtons.addConcertContact"));
-		$addContact->addIcon("plus");
-		$addContact->write();
-		
-		// edit program
-		$concert = $this->getData()->getConcert($concert_id);
-		$program_id = $concert["program"];
-		if($program_id != null && $program_id > 0) {
-			$program = new Link($this->modePrefix() . "programs&sub=view&id=$program_id", Lang::txt("KonzerteView_viewButtons.editProgram"));
-			$program->addIcon("music-note-list");
-			$program->write();
-		}
-		
-		// gig card (Word export)
-		$word = new Link("src/export/gigcard.doc?id=" . $_GET["id"], "Word Export");
-		$word->addIcon("save");
-		$word->write();
-		
-		// notifications
-		$emLink = "?mod=" . $this->getData()->getSysdata()->getModuleId("Kommunikation");
-		$emLink .= "&mode=concertMail&preselect=" . $_GET["id"];
-		$em = new Link($emLink, Lang::txt("KonzerteView_viewButtons.Sendnotification"));
-		$em->addIcon("envelope");
-		$em->write();
+    $concert_id = $_GET["id"];
+
+    $partLink = new Link($this->modePrefix() . "showParticipants&id=$concert_id", Lang::txt("KonzerteView_viewButtons.showParticipants"));
+    $partLink->addIcon("person-lines-fill");
+    $partLink->write();
+
+    // concert contact
+    $addContact = new Link($this->modePrefix() . "addConcertContact&id=$concert_id", Lang::txt("KonzerteView_viewButtons.addConcertContact"));
+    $addContact->addIcon("plus");
+    $addContact->write();
+
+    // edit program
+    $concert = $this->getData()->getConcert($concert_id);
+    $program_id = $concert["program"];
+    if($program_id != null && $program_id > 0) {
+        $program = new Link($this->modePrefix() . "programs&sub=view&id=$program_id", Lang::txt("KonzerteView_viewButtons.editProgram"));
+        $program->addIcon("music-note-list");
+        $program->write();
+    }
 	}
 	
 	function showParticipants() {
@@ -469,41 +457,43 @@ class KonzerteView extends CrudRefLocationView {
 		$editParticipation->addIcon("pen");
 		$editParticipation->write();
 	}
-	
-	public function editParticipation() {
-		Writing::h3(Lang::txt("KonzerteView_editParticipation.heading", array($gig["title"])));
-		echo "Wegen eines internen Bugs ist dieser Knopf vorr&uuml;bergehend deaktiviert. Wir arbeiten daran....";
-	}
 
-	public function editParticipation_Buggy() {
-		$gig = $this->getData()->findByIdNoRef($_GET["id"]);
-		Writing::h3(Lang::txt("KonzerteView_editParticipation.heading", array($gig["title"])));
-		$participation = $this->getData()->getFullParticipation($_GET["id"]);
-		?>
-		<form action="<?php echo $this->modePrefix() . "editParticipation_process&id=" . $_GET["id"]; ?>" method="POST">
-		<?php
-		foreach($participation as $i => $part) {
-			if($i == 0) continue;
-			?><div class="participationEditLine col-md-4">
-				<span class="participationEditLine_user">
-					<?php echo $this->formatContact($part, "NAME_INST"); ?>
-				</span>
-				<?php 
-				$dd = new Dropdown("user_" . $part["user_id"]);
-				$dd->addOption("?", -1);
-				$dd->addOption("-", 0);
-				$dd->addOption("✓", 1);
-				$dd->addOption("~", 2);
-				$dd->setSelected($part['participate']);
-				$dd->setStyleClass("participationQuickSelector");
-				echo $dd->write();
-				?>
-			</div><?php
-		}
-		?>
-			<input type="submit" value="<?php echo Lang::txt("KonzerteView_editParticipation.saveButton"); ?>" style="margin-top: 1em;" />
-		</form>
-		<?php
+	public function editParticipation() {
+    $gig = $this->getData()->findByIdNoRef($_GET["id"]);
+    Writing::h3(Lang::txt("KonzerteView_editParticipation.heading", array($gig["title"])));
+    $participation = $this->getData()->getFullParticipation($_GET["id"]);
+    ?>
+    <form action="<?php echo $this->modePrefix() . "editParticipation_process&id=" . $_GET["id"]; ?>" method="POST">
+        <div class="d-flex justify-content-end align-items-center mb-3">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi-save"></i>
+                <?php echo Lang::txt("KonzerteView_editParticipation.saveButton"); ?>
+            </button>
+        </div>
+        <?php
+        foreach($participation as $i => $part) {
+            if($i == 0) continue;
+            ?>
+            <div class="participationEditLine col-md-4">
+                <span class="participationEditLine_user">
+                    <?php echo $this->formatContact($part, "NAME_INST"); ?>
+                </span>
+                <?php 
+                $dd = new Dropdown("user_" . $part["user_id"]);
+                $dd->addOption("?", -1);
+                $dd->addOption("-", 0);
+                $dd->addOption("✓", 1);
+                $dd->addOption("~", 2);
+                $dd->setSelected($part['participate']);
+                $dd->setStyleClass("participationQuickSelector");
+                echo $dd->write();
+                ?>
+            </div>
+            <?php
+        }
+        ?>
+    </form>
+    <?php
 	}
 	
 	protected function editParticipationOptions() {

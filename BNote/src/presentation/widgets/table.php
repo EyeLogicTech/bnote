@@ -1,6 +1,6 @@
 <?php
 /**
- * Displays a table with data
+ * Displays a table with data. hL: filterCounter
  **/
 class Table implements iWriteable {
 
@@ -211,10 +211,10 @@ class Table implements iWriteable {
 		array_push($this->hideCols, $colName);
 	}
 
-    /**
-     * Set column sort order by DATE dd.mm.yyyy hh:mm even if the field's data format is not DATE
-     * This is useful if the field string has more info appended: "01.01.1970 13:00 - 14:00"
-     */
+	/**
+	 * Set column sort order by DATE dd.mm.yyyy hh:mm even if the field's data format is not DATE
+	 * This is useful if the field string has more info appended: "01.01.1970 13:00 - 14:00"
+	 */
 	function sortColumnByDate($colName) {
 		array_push($this->colsSortedByDate, $colName);
 	}
@@ -478,7 +478,7 @@ class Table implements iWriteable {
 			}
 ?>
 				var identifier = "#<?php echo $identifier; ?>"
-	    		var table = $(identifier).DataTable({
+				var table = $(identifier).DataTable({
 					 "paging": false, 
 					 "info": false,  
 					 "responsive": true,
@@ -504,7 +504,7 @@ class Table implements iWriteable {
 				 		 "sEmptyTable":  "<?php echo Lang::txt("Table_write.sEmptyTable"); ?>",
 						 "sInfoEmpty":  "<?php echo Lang::txt("Table_write.sInfoEmpty"); ?>",
 						 "sZeroRecords":  "<?php echo Lang::txt("Table_write.sZeroRecords"); ?>",
-	        			 "sSearch": "<?php echo Lang::txt("Table_write.sSearch"); ?>"
+						 "sSearch": "<?php echo Lang::txt("Table_write.sSearch"); ?>"
 			 		 },
 			 		 <?php 
 			 		 if(count($this->controlButtons) > 0) {
@@ -566,10 +566,32 @@ class Table implements iWriteable {
 		?>
 		});
 		</script>
-		<?php
+<?php
+	// Zähler anhängen, wenn DataTable verwendet wurde
+	echo '<script src="src/presentation/js/filterCounter_attach.js?v=1"></script>';
+	echo "<script>
+		$(document).ready(function() {
+			setTimeout(function() {
+				setupFilterCounter('$identifier');
+			}, 100);
+		});
+	</script>";
+
+	// Stil für Suchfeld
+	echo '<style>
+		div.dataTables_filter input {
+			width: 150px !important;
+			padding: 2px 4px;
+			height: 24px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			font-size: 0.85rem;
+			background-color: #ffffff;
 		}
-		return $identifier;
-	}
+	</style>';
+}
+return $identifier;
+}
 
 	public function getName() { return NULL; }
 }

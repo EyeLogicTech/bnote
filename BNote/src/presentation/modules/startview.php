@@ -1,8 +1,8 @@
 <?php
 
 /**
- * View for start module.
- * @author matti, hL fuer probenteilnahmeliste Z84, 802, in function start: rehearsalcard farbe, scrollverhalten, nav-bar mini-icons entfernt, user feedback bei rehearsal, concert.
+ * View for start module
+ * @author matti, hL probenteilnahmeliste Z84, 802, in function start: rehearsalcard farbe, scrollverhalten, nav-bar mini-icons entfernt, user feedback bei rehearsal, concert. sort inboxitem. sort vote-names, fristablauf rehearsal u. concert.
  *
  */
 class StartView extends CrudRefLocationView {
@@ -93,134 +93,181 @@ class StartView extends CrudRefLocationView {
 	}
 	
 	function start() {
-    // ─────────────── Globaler CSS-Puffer und Smooth-Scroll ───────────────
-    ?>
-    <style>
-      /* Abstand für Fragment-Scroll */
-      html {
-        scroll-padding-top: 60px;
-        scroll-behavior: smooth;
-      }
+	// ─────────────── Globaler CSS-Puffer und Smooth-Scroll ───────────────
+	?>
+	<style>
+	  /* Abstand für Fragment-Scroll */
+	  html {
+		scroll-padding-top: 60px;
+		scroll-behavior: smooth;
+	  }
 
-      /* Aktive Card: linker Rand in Braun */
-      .start_box_active {
-        border-left: 4px solid #8B4513 !important;
-        border-right: none !important;
-      }
+	  /* Aktive Card: linker Rand in Braun */
+	  .start_box_active {
+		border-left: 4px solid #8B4513 !important;
+		border-right: none !important;
+	  }
 
-      /* Rehearsal-Cards: rechter Rand grün */
-      .start_box_participation_yes {
-        border-right: 4px solid green !important;
-      }
-    </style>
-    <?php
+	  /* Rehearsal-Cards: rechter Rand grün */
+	  .start_box_participation_yes {
+		border-right: 4px solid green !important;
+	  }
+	</style>
+	<?php
 
-    $otype      = isset($_GET["otype"]) ? $_GET["otype"] : "N";  // N = News
-    $inboxItems = $this->getData()->getInboxItems();
+	$otype	  = isset($_GET["otype"]) ? $_GET["otype"] : "N";  // N = News
 
-    if ($otype != "N") {
-        $detailsTitle = $this->findInboxItemTitle($inboxItems, $otype, $_GET["oid"]);
-    } else {
-        $detailsTitle = Lang::txt("StartView_start_box.heading");
-    }
-    $news = $this->getData()->getNews();
+	// Sortierlogik jetzt ausgelagert:
+	$inboxItems = $this->sortInboxItems($this->getData()->getInboxItems());
 
-    // GDPR-Block
-    if ($news !== "" || $this->getData()->getSysdata()->gdprOk() == 0) {
-        if ($this->getData()->getSysdata()->gdprOk() == 0) {
-            ?>
-            <div class="row">
-              <div class="col-md-12 mb-3">
-                <span class="warning"><?php echo Lang::txt("StartView_start.warning"); ?></span>
-                <a href="?mod=terms" target="_blank"><?php echo Lang::txt("StartView_start.terms"); ?></a><br/>
-                <?php 
-                  (new Link($this->modePrefix() . "gdprOk&accept=1", Lang::txt("StartView_start.checkmark")))
-                    ->addIcon("check-square")->write();
-                  (new Link($this->modePrefix() . "gdprOk&accept=0", Lang::txt("StartView_start.cancel")))
-                    ->addIcon("x-square")->write();
-                ?>
-              </div>
-            </div>
-            <?php
-            return;
-        }
-    }
-    ?>
-    <div class="row">
-      <div class="col-md-3">
-        <!-- FEED -->
-        <div class="start_box_heading p-2 mb-1">
-          <div class="d-sm-inline-flex">
-            <?php echo Lang::txt("StartView_start.Inbox"); ?>
-          </div>
-          <!-- Icons entfernt -->
-        </div>
-        <?php
-        $newsActive = ($otype === "N");
+	if ($otype != "N") {
+		$detailsTitle = $this->findInboxItemTitle($inboxItems, $otype, $_GET["oid"]);
+	} else {
+		$detailsTitle = Lang::txt("StartView_start_box.heading");
+	}
+	$news = $this->getData()->getNews();
 
-        // News-Card mit Anker zum Detailbereich
-        $newsHref = $this->modePrefix() . "start&otype=N#itemContentScreen";
-        $this->writeCard(
-            Lang::txt("StartView_start_box.heading"),
-            substr($news, 0, 50) . "...",
-            $newsHref,
-            $newsActive,
-            NULL,
-            NULL,
-            NULL,
-            false
-        );
+	// GDPR-Block
+	if ($news !== "" || $this->getData()->getSysdata()->gdprOk() == 0) {
+		if ($this->getData()->getSysdata()->gdprOk() == 0) {
+			?>
+			<div class="row">
+			  <div class="col-md-12 mb-3">
+				<span class="warning"><?php echo Lang::txt("StartView_start.warning"); ?></span>
+				<a href="?mod=terms" target="_blank"><?php echo Lang::txt("StartView_start.terms"); ?></a><br/>
+				<?php 
+				  (new Link($this->modePrefix() . "gdprOk&accept=1", Lang::txt("StartView_start.checkmark")))
+					->addIcon("check-square")->write();
+				  (new Link($this->modePrefix() . "gdprOk&accept=0", Lang::txt("StartView_start.cancel")))
+					->addIcon("x-square")->write();
+				?>
+			  </div>
+			</div>
+			<?php
+			return;
+		}
+	}
+	?>
+	<div class="row">
+	  <div class="col-md-3">
+		<!-- FEED -->
+		<div class="start_box_heading p-2 mb-1">
+		  <div class="d-sm-inline-flex">
+			<?php echo Lang::txt("StartView_start.Inbox"); ?>
+		  </div>
+		  <!-- Icons entfernt -->
+		</div>
+		<?php
+		$newsActive = ($otype === "N");
 
-        // alle anderen Inbox-Items
-        $sorted = array_column($inboxItems, 'replyUntil');
-        array_multisort($sorted, SORT_ASC, $inboxItems);
-        foreach ($inboxItems as $item) {
-            $only   = isset($_GET["only"]) ? "only=" . $_GET["only"] : "";
-            $href   = $this->modePrefix()
-                      . "start&otype={$item['otype']}&oid={$item['oid']}"
-                      . "$only#itemContentScreen";
-            $active = ($otype === $item["otype"] && isset($_GET["oid"])
-                       && $_GET["oid"] == $item["oid"]);
-            $part   = $item["participation"] ?? NULL;
-            $status = $item["status"]        ?? NULL;
-            if (!isset($_GET["only"]) || $_GET["only"] === $item["otype"]) {
-                $isReh = ($item["otype"] === "R");
-                $this->writeCard(
-                    $item["title"],
-                    $item["preview"],
-                    $href,
-                    $active,
-                    $item["due"],
-                    $part,
-                    $status,
-                    $isReh
-                );
-            }
-        }
-        ?>
-      </div>
+		// News-Card mit Anker zum Detailbereich
+		$newsHref = $this->modePrefix() . "start&otype=N#itemContentScreen";
+		$this->writeCard(
+			Lang::txt("StartView_start_box.heading"),
+			substr($news, 0, 50) . "...",
+			$newsHref,
+			$newsActive,
+			NULL,
+			NULL,
+			NULL,
+			false
+		);
 
-      <div class="col-md-9" id="itemContentScreen">
-        <!-- CONTENT -->
-        <div class="start_box_content_heading p-2 mb-1">
-          <?php echo $detailsTitle; ?>
-        </div>
-        <div class="py-2">
-          <?php 
-          if ($this->getData()->getSysdata()->getDynamicConfigParameter("discussion_on") == 1 && $otype !== "N") {
-            echo '<div class="row"><div class="col-md-9">';
-            $this->{"startView{$otype}"}();
-            echo '</div><div class="col-md-3">';
-            (new ChatWidget($otype, $_GET["oid"], $this->getData()->adp(), $this->modePrefix() . "addComment"))->write();
-            echo '</div></div>';
-          } else {
-            $this->{"startView{$otype}"}();
-          }
-          ?>
-        </div>
-      </div>
-    </div>
-    <?php
+		// alle anderen Inbox-Items (bereits sortiert)
+		foreach ($inboxItems as $item) {
+			$only   = isset($_GET["only"]) ? "only=" . $_GET["only"] : "";
+			$href   = $this->modePrefix()
+					  . "start&otype={$item['otype']}&oid={$item['oid']}"
+					  . "$only#itemContentScreen";
+			$active = ($otype === $item["otype"] && isset($_GET["oid"])
+					   && $_GET["oid"] == $item["oid"]);
+			$part   = $item["participation"] ?? NULL;
+			$status = $item["status"]		?? NULL;
+			if (!isset($_GET["only"]) || $_GET["only"] === $item["otype"]) {
+				$isReh = ($item["otype"] === "R");
+				$this->writeCard(
+					$item["title"],
+					$item["preview"],
+					$href,
+					$active,
+					$item["due"],
+					$part,
+					$status,
+					$isReh
+				);
+			}
+		}
+		?>
+	  </div>
+
+	  <div class="col-md-9" id="itemContentScreen">
+		<!-- CONTENT -->
+		<div class="start_box_content_heading p-2 mb-1">
+		  <?php echo $detailsTitle; ?>
+		</div>
+		<div class="py-2">
+		  <?php 
+		  if ($this->getData()->getSysdata()->getDynamicConfigParameter("discussion_on") == 1 && $otype !== "N") {
+			echo '<div class="row"><div class="col-md-9">';
+			$this->{"startView{$otype}"}();
+			echo '</div><div class="col-md-3">';
+			(new ChatWidget($otype, $_GET["oid"], $this->getData()->adp(), $this->modePrefix() . "addComment"))->write();
+			echo '</div></div>';
+		  } else {
+			$this->{"startView{$otype}"}();
+		  }
+		  ?>
+		</div>
+	  </div>
+	</div>
+	<?php
+	}
+	
+
+	private function sortInboxItems($inboxItems) {
+	$now_ts = time();
+
+	// Bestimme für jeden Eintrag das passende SORTDATE
+	foreach ($inboxItems as &$item) {
+		// Standard: Fallback zu eventBegin (ist bei allen Cards gesetzt)
+		$sortDate = null;
+
+		// 1. Prüfe, ob replyUntil vorhanden und noch offen ist
+		if (!empty($item['replyUntil'])) {
+			$replyUntilTS = strtotime($item['replyUntil']);
+			if ($replyUntilTS !== false && $replyUntilTS > $now_ts) {
+				$sortDate = $replyUntilTS;
+			}
+		}
+
+		// 2. Falls kein offenes replyUntil: Fallback zu eventBegin (immer vorhanden)
+		if ($sortDate === null && !empty($item['eventBegin'])) {
+			$beginTS = strtotime($item['eventBegin']);
+			if ($beginTS !== false) {
+				$sortDate = $beginTS;
+			} else {
+				// Fallback: ganz ans Ende schieben
+				$sortDate = PHP_INT_MAX;
+			}
+		}
+
+		// Speichere das Sortierdatum temporär ab
+		$item['__SORTDATE'] = $sortDate ?? PHP_INT_MAX;
+	}
+	unset($item);
+
+	// Sortiere nach __SORTDATE aufsteigend
+	usort($inboxItems, function($a, $b) {
+		return $a['__SORTDATE'] <=> $b['__SORTDATE'];
+	});
+
+	// Entferne das Hilfsfeld
+	foreach ($inboxItems as &$item) {
+		unset($item['__SORTDATE']);
+	}
+	unset($item);
+
+	return $inboxItems;
 	}
 	
 	private function findInboxItemTitle($inboxItems, $itemType, $id) {
@@ -230,7 +277,7 @@ class StartView extends CrudRefLocationView {
 			}
 		}
 	}
-	
+		
 	private function writeCard($title, $preview, $href, $active, $dueDate=NULL, $userParticipation=NULL, $status=NULL, $noYesButton=False) {
 		$partClass = "";
 		if($userParticipation != NULL || is_int($userParticipation)) {
@@ -242,12 +289,12 @@ class StartView extends CrudRefLocationView {
 					$partClass = "start_box_participation_yes";
 					break;
 				case 2:
-                    if ($noYesButton) {
-					    $partClass = "start_box_participation_yes";
-                    }
-                    else {
-                        $partClass = "start_box_participation_maybe";
-                    }
+					if ($noYesButton) {
+						$partClass = "start_box_participation_yes";
+					}
+					else {
+						$partClass = "start_box_participation_maybe";
+					}
 					break;
 				default:
 					$partClass = "start_box_participation_unknown";
@@ -293,87 +340,181 @@ class StartView extends CrudRefLocationView {
 			echo '<span class="warning">' . Lang::txt("StartView_start_box_content.warning_2") . '</span>';
 		}
 	}
-	
-	function startViewR() {
-		$oid = $_GET["oid"];
-		$rehearsal = $this->getData()->getRehearsal($oid);
-		
-		// participation widget
-		$partLink = $this->modePrefix() . "saveParticipation&otype=R&oid=$oid";
-		$userParticipation = $this->getData()->doesParticipateInRehearsal($oid);
-		$partWidget = new ParticipationWidget($partLink, $userParticipation["participate"], $userParticipation["reason"]);
-		$partWidget->writeNoYesButton();
-		
-		Writing::h5(Lang::txt("StartView_startViewR.info"), "mt-3");
-		
-		// create details for each rehearsal
-		$dataview = new Dataview();
-		$dataview->addElement(Lang::txt("StartView_writeRehearsalList.begin"), Data::convertDateFromDb($rehearsal["begin"]));
-		$dataview->addElement(Lang::txt("StartView_writeRehearsalList.end"), Data::convertDateFromDb($rehearsal["end"]));
-		$dataview->addElement(Lang::txt("ProbenData_construct.status"), Lang::txt("Proben_status." . $rehearsal["status"]));
-		$dataview->addElement(Lang::txt("StartView_writeRehearsalList.location"), $rehearsal["name"] . ": " . $this->formatAddress($rehearsal));
-		if(isset($rehearsal["conductor"]) && $rehearsal["conductor"] != null) {
-			$dataview->addElement(Lang::txt("StartView_writeRehearsalList.conductor"), $this->getData()->adp()->getConductorname($rehearsal["conductor"]));
-		}
-		if(isset($rehearsal["groups"])) {
-			$groupNames = array_column($rehearsal["groups"], "name");
-			$dataview->addElement(Lang::txt("StartView_writeRehearsalList.groupNames"), join(", ", $groupNames));
-		}
-		
-		// custom data
-		$customFields = $this->getData()->getCustomFields('r', true);
-		$customData = $this->getData()->getCustomData('r', $rehearsal["id"]);
-		for($j = 1; $j < count($customFields); $j++) {
-			$field = $customFields[$j];
-			$label = $field["txtdefsingle"];
-			if(isset($customData[$field["techname"]])) {
-				$value = $customData[$field["techname"]];
-				if($field["fieldtype"] == "BOOLEAN") {
-					$value = $value == 1 ? Lang::txt("yes") : Lang::txt("no");
-				}
-				$dataview->addElement($label, $value);
-			}
-		}
-		
-		if($rehearsal["notes"] != "") {
-			$dataview->addElement(Lang::txt("StartView_writeRehearsalList.comment"), "<p class=\"ml-comment\">" . $rehearsal["notes"] . "</p>");
-		}
-		
-		$songs = $this->getData()->getSongsForRehearsal($oid);
-		if(count($songs) > 1) {
-			$strSongs = "";
-			for($j = 1; $j < count($songs); $j++) {
-				if($j > 1) $strSongs .= ", ";
-				$strSongs .= $songs[$j]["title"];
-				if($songs[$j]["notes"] != "") $strSongs .= " (" . $songs[$j]["notes"] . ")";
-			}
-			$dataview->addElement(Lang::txt("StartView_writeRehearsalList.Song"), $strSongs);
-		}
-		
-		$dataview->write();
 
-		// participants
-        if (True) { // deactivate Participant list
-		    Writing::h5(Lang::txt("StartView_rehearsalParticipants.participantsOfRehearsal", array(Data::convertDateFromDb(    $rehearsal["begin"]))), "mt-3");
-		
-		    $parts = $this->getData()->getRehearsalParticipants($oid);
-		    $table = new Table($parts);
-		    $table->renameHeader("name", Lang::txt("StartView_rehearsalParticipants.name"));
-		    $table->renameHeader("surname", Lang::txt("StartView_rehearsalParticipants.surname"));
-		    $table->renameHeader("nickname", Lang::txt("StartView_rehearsalParticipants.nickname"));
-		    $table->removeColumn("instrumentrank");
-		    $table->write();
-        }
+	function startViewR() {
+	$oid = $_GET["oid"];
+	$rehearsal = $this->getData()->getRehearsal($oid);
+
+	// Teilnahmebereich mit Fristprüfung anzeigen
+	$replyUntil = $this->getData()->getReplyUntilForParticipation("R", $oid);
+	$isExpired = ($replyUntil && strtotime($replyUntil) < time());
+
+	if ($isExpired) {
+		$this->showParticipationAfterDeadlineR($oid, $replyUntil);
+	} else {
+		$this->showParticipationFormR($oid);
+	}
+
+	Writing::h5(Lang::txt("StartView_startViewR.info"), "mt-3");
+
+	// Detailansicht (wie bisher)
+	$dataview = new Dataview();
+	$dataview->addElement(Lang::txt("StartView_writeRehearsalList.begin"), Data::convertDateFromDb($rehearsal["begin"]));
+	$dataview->addElement(Lang::txt("StartView_writeRehearsalList.end"), Data::convertDateFromDb($rehearsal["end"]));
+	$dataview->addElement(Lang::txt("ProbenData_construct.status"), Lang::txt("Proben_status." . $rehearsal["status"]));
+	$dataview->addElement(Lang::txt("StartView_writeRehearsalList.location"), $rehearsal["name"] . ": " . $this->formatAddress($rehearsal));
+	if (isset($rehearsal["conductor"]) && $rehearsal["conductor"] != null) {
+		$dataview->addElement(Lang::txt("StartView_writeRehearsalList.conductor"), $this->getData()->adp()->getConductorname($rehearsal["conductor"]));
+	}
+	if (isset($rehearsal["groups"])) {
+		$groupNames = array_column($rehearsal["groups"], "name");
+		$dataview->addElement(Lang::txt("StartView_writeRehearsalList.groupNames"), join(", ", $groupNames));
+	}
+
+	$customFields = $this->getData()->getCustomFields('r', true);
+	$customData = $this->getData()->getCustomData('r', $rehearsal["id"]);
+	for ($j = 1; $j < count($customFields); $j++) {
+		$field = $customFields[$j];
+		$label = $field["txtdefsingle"];
+		if (isset($customData[$field["techname"]])) {
+			$value = $customData[$field["techname"]];
+			if ($field["fieldtype"] == "BOOLEAN") {
+				$value = $value == 1 ? Lang::txt("yes") : Lang::txt("no");
+			}
+			$dataview->addElement($label, $value);
+		}
+	}
+
+	if ($rehearsal["notes"] != "") {
+		$dataview->addElement(Lang::txt("StartView_writeRehearsalList.comment"), "<p class=\"ml-comment\">" . $rehearsal["notes"] . "</p>");
+	}
+
+	$songs = $this->getData()->getSongsForRehearsal($oid);
+	if (count($songs) > 1) {
+		$strSongs = "";
+		for ($j = 1; $j < count($songs); $j++) {
+			if ($j > 1) $strSongs .= ", ";
+			$strSongs .= $songs[$j]["title"];
+			if ($songs[$j]["notes"] != "") $strSongs .= " (" . $songs[$j]["notes"] . ")";
+		}
+		$dataview->addElement(Lang::txt("StartView_writeRehearsalList.Song"), $strSongs);
+	}
+
+	$dataview->write();
+
+	// Teilnehmerliste
+	Writing::h5(Lang::txt("StartView_rehearsalParticipants.participantsOfRehearsal", array(Data::convertDateFromDb($rehearsal["begin"]))), "mt-3");
+
+	$parts = $this->getData()->getRehearsalParticipants($oid);
+	$table = new Table($parts);
+	$table->renameHeader("name", Lang::txt("StartView_rehearsalParticipants.name"));
+	$table->renameHeader("surname", Lang::txt("StartView_rehearsalParticipants.surname"));
+	$table->renameHeader("nickname", Lang::txt("StartView_rehearsalParticipants.nickname"));
+	$table->removeColumn("instrumentrank");
+	$table->write();
+	}
+
+	private function showParticipationFormR($oid) {
+	$partLink = $this->modePrefix() . "saveParticipation&otype=R&oid=$oid";
+	$userParticipation = $this->getData()->doesParticipateInRehearsal($oid);
+	$partWidget = new ParticipationWidget($partLink, $userParticipation["participate"], $userParticipation["reason"]);
+	$partWidget->writeNoYesButton();
+	}
+
+	private function showParticipationAfterDeadlineR($oid, $replyUntil) {
+	$userParticipation = $this->getData()->doesParticipateInRehearsal($oid);
+
+	// Teilnahme-Status bestimmen
+	$statusText = "keine Meldung";
+	$reason = isset($userParticipation["reason"]) ? trim($userParticipation["reason"]) : "";
+	if (isset($userParticipation["participate"])) {
+		switch ((int)$userParticipation["participate"]) {
+			case 1:
+				$statusText = "Nimmt teil";
+				break;
+			case 0:
+				// Status immer "Kommt nicht" (egal ob reason "zoom" ist)
+				$statusText = "Kommt nicht";
+				break;
+			case 2:
+				$statusText = "Teilnahme beabsichtigt";
+				break;
+			default:
+				$statusText = "keine Meldung";
+		}
+	}
+
+	// Reason anhängen, falls vorhanden (mehr als 1 Zeichen)
+	if (strlen($reason) > 1) {
+		$statusText .= ": " . htmlspecialchars($reason);
+	}
+
+	// Ausgabe
+	echo '<p>Die Mitteilungsfrist endete am ' . date("d.m.Y, H:i", strtotime($replyUntil)) . ' Uhr.<br>';
+	echo 'Deine Teilnahme ist im System gespeichert als: <strong>' . $statusText . '</strong></p>';
+	echo '<p>Bitte wende dich für Änderungen an Chorleitung und Vorstand Intern per Mail.</p>';
+	echo '<hr/>';
 	}
 	
 	function startViewC() {
-		$participation = $this->getData()->doesParticipateInConcert($_GET["oid"]);
-		$href = $this->modePrefix() . "saveParticipation&otype=C&oid=" . $_GET["oid"];
-		$partWidget = new ParticipationWidget($href, $participation["participate"], $participation["reason"]);
-		$partWidget->write();
-		$this->gigcard();
+	$oid = $_GET["oid"];
+
+	// Teilnahmebereich mit Fristprüfung anzeigen
+	$replyUntil = $this->getData()->getReplyUntilForParticipation("C", $oid);
+	$isExpired = ($replyUntil && strtotime($replyUntil) < time());
+
+	if ($isExpired) {
+		$this->showParticipationAfterDeadlineC($oid, $replyUntil);
+	} else {
+		$this->showParticipationFormC($oid);
 	}
-	
+
+	// Konzertinformationen anzeigen
+	$this->gigcard();
+	}
+
+	private function showParticipationFormC($oid) {
+	$partLink = $this->modePrefix() . "saveParticipation&otype=C&oid=$oid";
+	$userParticipation = $this->getData()->doesParticipateInConcert($oid);
+	$partWidget = new ParticipationWidget($partLink, $userParticipation["participate"], $userParticipation["reason"]);
+	$partWidget->write();
+	}
+
+	private function showParticipationAfterDeadlineC($oid, $replyUntil) {
+	$userParticipation = $this->getData()->doesParticipateInConcert($oid);
+
+	// Teilnahme-Status bestimmen (C)
+	$statusText = "Keine Meldung";
+	if (isset($userParticipation["participate"])) {
+		switch ((int)$userParticipation["participate"]) {
+			case 0:
+				$statusText = "Nimmt nicht teil";
+				break;
+			case 1:
+				$statusText = "Nimmt teil";
+				break;
+			case 2:
+				$statusText = "Nimmt vielleicht teil";
+				break;
+			case -1:
+			default:
+				$statusText = "Keine Meldung";
+		}
+	}
+
+	// Reason anhängen, falls vorhanden (mehr als 1 Zeichen, nach Leerzeichen getrimmt)
+	$reason = isset($userParticipation["reason"]) ? trim($userParticipation["reason"]) : "";
+	if (strlen($reason) > 1) {
+		$statusText .= ": " . htmlspecialchars($reason);
+	}
+
+	// Ausgabe
+	echo '<p>Die Mitteilungsfrist endete am ' . date("d.m.Y, H:i", strtotime($replyUntil)) . ' Uhr.<br>';
+	echo 'Deine Teilnahme ist im System gespeichert als: <strong>' . $statusText . '</strong></p>';
+	echo '<p>Bitte wende dich für Änderungen an Chorleitung und Vorstand Intern per Mail.</p>';
+	echo '<hr/>';
+	}
+
 	function startViewT() {
 		?>
 		<div class="mb-3">
@@ -452,87 +593,85 @@ class StartView extends CrudRefLocationView {
 		
 		$this->voteOptions();
 	}
+
+	// Sortierung option-name nach option-id asc
 	public function voteOptions() {
-		$oid = -1; // definitely leads to display the error (which is correct)
-		if(isset($_GET["oid"])) {
-			$oid = $_GET["oid"];
-		}
-		else if(isset($_GET["id"])) {
-			$oid = $_GET["id"];
-		}
-		if(!$this->getData()->canUserVote($oid)) {
-			new BNoteError(Lang::txt("StartView_voteOptions.error"));
-		}
-		
-		$vote = $this->getData()->getVote($oid);
-		Writing::h4(Lang::txt("vote"), "mt-3");
-		
-		echo "<form action=\"" . $this->modePrefix() . "saveVote&id=$oid\" method=\"POST\" class=\"mb-3\">\n";
-		$options = $this->getData()->getOptionsForVote($oid);
-		if(count($options) > 1) {
-			$dv = new Dataview();
-			for($i = 1 ; $i < count($options); $i++) {
-				if($vote["is_date"] == 1) {
-					$label = substr(Data::getWeekdayFromDbDate($options[$i]["odate"]), 0, 2) . ", ";
-					$label .= Data::convertDateFromDb($options[$i]["odate"]);
-				}
-				else {
-					$label = $options[$i]["name"];
-				}
-				
-				$in = '<input type="';
-				$selected = $this->getData()->getSelectedOptionsForUser($options[$i]["id"], $this->getUserId());
-				if($this->getData()->getSysdata()->getDynamicConfigParameter("allow_participation_maybe") == "1"
-						&& $vote["is_multi"] == 1) {
-					$dd = new Dropdown($options[$i]["id"]);
-					$dd->addOption(Lang::txt("StartView_voteOptions.worksForMeNot"), "no");
-					$dd->addOption(Lang::txt("StartView_voteOptions.worksForMe"), "yes");
-					$dd->addOption(Lang::txt("StartView_voteOptions.worksForMeMaybe"), "maybe");
-					if($selected !== -1) {
-						$choice = "yes";
-						if($selected == 2) $choice = "maybe";
-						else if($selected < 1) $choice = "no";
-						$dd->setSelected($choice);
-					}		
-					else {
-						$dd->setSelected("yes"); // default
-					}			
-					$in = $dd->write();
-				}
-				else if($vote["is_multi"] == 1) {
-					if($selected == 1) {
-						$checked = "checked";
-					}
-					else {
-						$checked = "";
-					}
-					$in .= "checkbox";
-					$in .= '" name="' . $options[$i]["id"] . '" ' . $checked . '/>';
-				}
-				else {
-					if($selected == 1) {
-						$checked = "checked";
-					}
-					else {
-						$checked = "";
-					}
-					$in .= "radio";
-					$in .= '" name="uservote" value="' . $options[$i]["id"] . '" ' . $checked . '/>';
-				}
-				if(is_numeric($label)) {
-					$dv->allowNumericLabels();
-				}
-				$dv->addElement($label, $in);
-			}
-			$dv->write();
-			echo '<input type="submit" class="btn btn-primary" />' . "\n";
-		}
-		else {
-			Writing::p(Lang::txt("StartView_voteOptions.noOptionsYet"));
-		}
-		echo "</form>\n";
+	$oid = -1;
+	if (isset($_GET["oid"])) {
+		$oid = $_GET["oid"];
+	} else if (isset($_GET["id"])) {
+		$oid = $_GET["id"];
 	}
-	
+
+	if (!$this->getData()->canUserVote($oid)) {
+		new BNoteError(Lang::txt("StartView_voteOptions.error"));
+	}
+
+	$vote = $this->getData()->getVote($oid);
+	Writing::h4(Lang::txt("vote"), "mt-3");
+
+	echo "<form action=\"" . $this->modePrefix() . "saveVote&id=$oid\" method=\"POST\" class=\"mb-3\">\n";
+	$options = $this->getData()->getOptionsForVote($oid);
+
+	// Optionen nach id aufsteigend sortieren
+	usort($options, function($a, $b) {
+		return ($a["id"] ?? 0) <=> ($b["id"] ?? 0);
+	});
+
+	if (count($options) > 0) {
+		$dv = new Dataview();
+		foreach ($options as $opt) {
+			if (!isset($opt["id"]) || !isset($opt["name"])) {
+				continue; // ungültiger Eintrag
+			}
+
+			$optId = $opt["id"];
+			if ($vote["is_date"] == 1 && isset($opt["odate"])) {
+				$label = substr(Data::getWeekdayFromDbDate($opt["odate"]), 0, 2) . ", " . Data::convertDateFromDb($opt["odate"]);
+			} else {
+				$label = $opt["name"];
+			}
+
+			$in = '<input type="';
+			$selected = $this->getData()->getSelectedOptionsForUser($optId, $this->getUserId());
+
+			if (
+				$this->getData()->getSysdata()->getDynamicConfigParameter("allow_participation_maybe") == "1" &&
+				$vote["is_multi"] == 1
+			) {
+				$dd = new Dropdown($optId);
+				$dd->addOption(Lang::txt("StartView_voteOptions.worksForMeNot"), "no");
+				$dd->addOption(Lang::txt("StartView_voteOptions.worksForMe"), "yes");
+				$dd->addOption(Lang::txt("StartView_voteOptions.worksForMeMaybe"), "maybe");
+
+				if ($selected !== -1) {
+					$choice = $selected == 2 ? "maybe" : ($selected < 1 ? "no" : "yes");
+					$dd->setSelected($choice);
+				} else {
+					$dd->setSelected("yes");
+				}
+				$in = $dd->write();
+			} else if ($vote["is_multi"] == 1) {
+				$checked = ($selected == 1) ? "checked" : "";
+				$in .= 'checkbox" name="' . $optId . '" ' . $checked . ' />';
+			} else {
+				$checked = ($selected == 1) ? "checked" : "";
+				$in .= 'radio" name="uservote" value="' . $optId . '" ' . $checked . ' />';
+			}
+
+			if (is_numeric($label)) {
+				$dv->allowNumericLabels();
+			}
+			$dv->addElement($label, $in);
+		}
+		$dv->write();
+		echo '<input type="submit" class="btn btn-primary" />' . "\n";
+	} else {
+		Writing::p(Lang::txt("StartView_voteOptions.noOptionsYet"));
+	}
+	echo "</form>\n";
+	}	
+
 	public function saveVote() {
 		$this->checkID();
 		$this->getData()->saveVote($_GET["id"], $_POST);
@@ -596,20 +735,32 @@ class StartView extends CrudRefLocationView {
 	public function concertParticipantsOptions() {
 		$this->backToStart();
 	}
-	
+
 	function saveParticipationOptions() {
-    echo '<div class="d-flex align-items-center mb-3">';
-    
-    // Linker Bereich: Meldung
-    echo   '<div class="me-auto">';
-    echo '<h6 class="text-danger mb-1">Meldung gespeichert</h6>';
-    echo     '<span class="d-block">Aktualisiere Deine Teilnahmemeldung, wenn sich etwas ändert.&nbsp;&nbsp;</span>';
-    echo   '</div>';
-    
-    // Rechter Bereich: OK-Button
-    echo   '<a href="main.php?mod=1" class="btn btn-secondary">OK</a>';
-    
-    echo '</div>';
+	$otype = $_GET['otype'] ?? null;   // "R" für rehearsal, "C" für concert
+	$oid = $_GET['oid'] ?? null;
+
+	// Hole das Rückmeldedatum über die neue Methode in StartData
+	$replyUntil = null;
+	if ($otype && $oid) {
+		$replyUntil = $this->getData()->getReplyUntilForParticipation($otype, $oid);
+	}
+
+	echo '<div class="d-flex align-items-center mb-3">';
+	echo   '<div class="me-auto">';
+	echo '<h6 class="text-danger mb-1">Teilnahmemeldung gespeichert</h6>';
+
+	// Formatieren falls vorhanden, sonst Platzhalter
+	if ($replyUntil) {
+		$datum = date('d.m.Y H:i', strtotime($replyUntil));
+		echo '<span class="d-block">Du kannst sie bis zum ' . $datum . ' &auml;ndern.&nbsp;&nbsp;</span>';
+	} else {
+		echo '<span class="d-block">Du kannst sie noch &auml;ndern.</span>';
+	}
+
+	echo   '</div>';
+	echo   '<a href="main.php?mod=1" class="btn btn-secondary">OK</a>';
+	echo '</div>';
 	}
 	
 	function gigcard() {

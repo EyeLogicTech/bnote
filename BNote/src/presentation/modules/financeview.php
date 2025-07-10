@@ -363,7 +363,7 @@ class FinanceView extends CrudView {
 			@page {size: landscape}
 			
 			.dataTables_filter {
-			    display: none;
+				display: none;
 			}
 			
 			td.DataTable_Header {
@@ -472,7 +472,7 @@ class FinanceView extends CrudView {
 	Writing::h1("Einzugliste Mitgliederbeiträge");
 
 	$this->zeigeEinzugMetadaten();   // Zeigt Formular für 4 Felder
-	$this->zeigeEinzugstabelle();    // Zeigt Tabelle + Download
+	$this->zeigeEinzugstabelle();	// Zeigt Tabelle + Download
 	}
 	
 	private function zeigeEinzugMetadaten() {
@@ -485,7 +485,7 @@ class FinanceView extends CrudView {
 	$glaeubigerId = $this->getData()->getBancantaGlaeubigerID();
 	?>
 	<p class="mb-2 text-body">
-		IBAN (<?php echo $iban; ?>) und Gläubiger ID (<?php echo $glaeubigerId; ?>) von bancanta werden im Modul Kontakte / bancanta e.V. festgelegt und können dort geändert werden. Hier legst Du die Einzugperiode fest. Sie ist immer halbjährlich: vom 01.01 - 30.06 bzw 01.07 - 31.12. eines Jahres.
+		Hier legst Du die Einzugperiode fest. Sie ist immer halbj&auml;hrlich vom 01.01 - 30.06 bzw 01.07 - 31.12. eines Jahres.<br>IBAN u. Gl&auml;ubiger-ID von bancanta &auml;nderst Du falls n&ouml;tig in Kontakte > bancanta e.V.
 	</p>
 	<?php
 	}

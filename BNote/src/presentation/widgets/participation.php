@@ -2,7 +2,7 @@
 
 /**
  * Handles participation in rehearsals and concerts.
- * @author matti
+ * @author matti, hL: reason-reset
  *
  */
 class ParticipationWidget implements iWriteable {
@@ -71,6 +71,8 @@ class ParticipationWidget implements iWriteable {
 			</form>
 		</div>
 		<?php
+	// <--- Hier der Aufruf am Ende
+	$this->writeReasonResetScript();
 	}
 
 	public function writeNoYesButton() {
@@ -117,6 +119,22 @@ class ParticipationWidget implements iWriteable {
 		</script>
 
 		<?php
+		$this->writeReasonResetScript();
+	}
+
+	private function writeReasonResetScript() {
+	?>
+	<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		document.querySelectorAll('input[name="participation"]').forEach(function(radio) {
+			radio.addEventListener('change', function() {
+				var reason = document.querySelector('input[name="reason"]');
+				if (reason) reason.value = '';
+			});
+		});
+	});
+	</script>
+	<?php
 	}
 	
 }

@@ -2,8 +2,9 @@
 require_once $GLOBALS["DIR_LOGIC_MODULES"] . "logincontroller.php";
 
 /**
- * Data Access Class for vote data.
- * @author matti
+ * Data Access Class for vote data. hL: is_date, is_multi auskommentiert. table vote_group_invited 
+ * 
+ * @author matti, hL: getVotesWithAuthorName, reopen, deleteVote, neue ergebnisdarstellung 2 tabellen
  *
  */
 class AbstimmungData extends AbstractData {
@@ -17,7 +18,7 @@ class AbstimmungData extends AbstractData {
 				"name" => array(Lang::txt("AbstimmungData_construct.name"), FieldType::CHAR),
 				"author" => array(Lang::txt("AbstimmungData_construct.author"), FieldType::REFERENCE),
 				"end" => array(Lang::txt("AbstimmungData_construct.end"), FieldType::DATETIME),
-				"is_date" => array(Lang::txt("AbstimmungData_construct.is_date"), FieldType::BOOLEAN),
+				// "is_date" => array(Lang::txt("AbstimmungData_construct.is_date"), FieldType::BOOLEAN), // deaktiviert
 				"is_multi" => array(Lang::txt("AbstimmungData_construct.is_multi"), FieldType::BOOLEAN),
 				"is_finished" => array(Lang::txt("AbstimmungData_construct.is_finished"), FieldType::BOOLEAN)
 		);
@@ -29,49 +30,53 @@ class AbstimmungData extends AbstractData {
 		$this->init($dir_prefix);
 		$this->init_trigger($dir_prefix);
 	}
-	
+
 	function create($values) {
-		// validation
-		$this->regex->isSubject($_POST["name"]);
-		$_POST["end"] = trim($_POST["end"]);	
-		$this->regex->isDateTime($_POST["end"]);
-		
-		$author = $this->getUserId();
-		if(isset($_POST["is_date"])) { $is_date = 1; } else { $is_date = 0; }
-		if(isset($_POST["is_multi"])) { $is_multi = 1; } else { $is_multi = 0; }
-		$is_finished = 0;
-		
-		$end_dt = $_POST["end"];
-		
-		// insert vote
-		$query = "INSERT INTO vote (name, author, end, is_multi, is_date, is_finished) VALUES (?, ?, ?, ?, ?, ?)";
-		$params = array(
-				array("s", $_POST["name"]), 
-				array("s", $author),
-				array("s", $end_dt),
-				array("i", $is_multi),
-				array("i", $is_date),
-				array("i", $is_finished)
-		);
-		$vid = $this->database->prepStatement($query, $params);
-		
-		// resolve groups and add members
-		$grps = GroupSelector::getPostSelection($this->adp()->getGroups(), "group");
-		$this->registerVoters($vid, $grps);
-		
-		// create trigger if available
-		if($this->triggerServiceEnabled) {
-			$this->createTrigger($end_dt, $this->buildTriggerData("V", $vid));
-		}
-		
-		return $vid;
+	// validation
+	$this->regex->isSubject($_POST["name"]);
+	$_POST["end"] = trim($_POST["end"]);
+	$this->regex->isDateTime($_POST["end"]);
+
+	$author = $this->getUserId();
+	// is_date und is_multi immer 0
+	$is_date = 0;
+	$is_multi = 0;
+	$is_finished = 0;
+	$end_dt = $_POST["end"];
+
+	// Insert vote – is_multi und is_date sind immer 0
+	$query = "INSERT INTO vote (name, author, end, is_multi, is_date, is_finished) VALUES (?, ?, ?, ?, ?, ?)";
+	$params = array(
+		array("s", $_POST["name"]),
+		array("s", $author),
+		array("s", $end_dt),
+		array("i", $is_multi),
+		array("i", $is_date),
+		array("i", $is_finished)
+	);
+	$vid = $this->database->prepStatement($query, $params);
+
+	// Gruppen/Teilnehmer auf Basis der gewählten Gruppen im Formular hinzufügen
+	$grps = GroupSelector::getPostSelection($this->adp()->getGroups(), "group");
+	$this->registerVoters($vid, $grps);
+
+	// NEU: eingeladene Gruppen für diese Vote in vote_group_invited speichern
+	$this->registerInvitedGroups($vid, $grps);
+
+	// create trigger if available
+	if($this->triggerServiceEnabled) {
+		$this->createTrigger($end_dt, $this->buildTriggerData("V", $vid));
 	}
+
+	return $vid;
+	}	
 	
 	/**
 	 * @return Database Selection with the votes for the current user that are not marked as finished.
 	 */
 	function getUserActiveVotes() {
-		$query = "SELECT id, name, end, is_multi, is_date FROM " . $this->table;
+		// "is_date" entfernt
+		$query = "SELECT id, name, end, is_multi FROM " . $this->table;
 		$query .= " WHERE is_finished = 0 AND author = ?";
 		$query .= " ORDER BY end ASC";
 		return $this->database->getSelection($query, array(array("i", $this->getUserId())));
@@ -81,7 +86,8 @@ class AbstimmungData extends AbstractData {
 	 * @return Database Selection with all active votes within the last year that are not marked as finished.
 	 */
 	function getAllActiveVotes() {
-		$query = "SELECT id, name, end, is_multi, is_date FROM vote";
+		// "is_date" entfernt
+		$query = "SELECT id, name, end, is_multi FROM vote";
 		$query .= " WHERE is_finished = 0 AND YEAR(end) >= (YEAR(NOW())-1)";
 		$query .= " ORDER BY end ASC";
 		return $this->database->getSelection($query);
@@ -100,14 +106,12 @@ class AbstimmungData extends AbstractData {
 		 
 		if($this->getSysdata()->isUserSuperUser() || $this->getSysdata()->isUserMemberGroup(1)) {
 			// in case the system admin looks at the votes, show all of them
-			$query = "SELECT id, name, end, is_multi, is_date, is_finished ";
-			$query .= "FROM vote";
+			$query = "SELECT id, name, end, is_multi, is_finished FROM vote"; // "is_date" entfernt
 			$query .= " WHERE is_finished = ?";
 			$query .= " ORDER BY is_finished, end ASC";
 		}
 		else {
-			$query = "SELECT v.id, v.name, v.end, v.is_multi, v.is_date ";
-			$query .= " FROM vote v JOIN vote_group vg ON vg.vote = v.id";
+			$query = "SELECT v.id, v.name, v.end, v.is_multi FROM vote v JOIN vote_group vg ON vg.vote = v.id"; // "is_date" entfernt
 			$query .= " WHERE is_finished = ? AND vg.user = ?";
 			$query .= " ORDER BY v.end ASC";
 			array_push($params, array("i", $uid));
@@ -146,79 +150,53 @@ class AbstimmungData extends AbstractData {
 	}
 	
 	function getOptions($vid) {
-		$query = "SELECT vo.* ";
-		$query .= "FROM vote_option vo, vote v ";
-		$query .= "WHERE vo.vote = v.id AND v.id = ?";
-		if($this->isDateVote($vid)) {
-			$query .= " ORDER BY vo.odate ASC";
-		}
-		return $this->database->getSelection($query, array(array("i", $vid)));
+	$query = "SELECT vo.* FROM vote_option vo, vote v WHERE vo.vote = v.id AND v.id = ?";
+	return $this->database->getSelection($query, array(array("i", $vid)));
 	}
-	
-	private function isDateVote($vid) {
-		return ($this->database->colValue("SELECT is_date FROM vote WHERE id = ?", "is_date", array(array("i", $vid))) == 1);
-	}
-	
+
 	function addOption($vid) {
-		$params = array(array("i", $vid));
-		if($this->isDateVote($vid)) {
-			$query = "INSERT INTO vote_option (vote, odate) VALUES (?, ?)";
-			$_POST["odate"] = trim($_POST["odate"]);
-			$this->regex->isDateTime($_POST["odate"]);
-			array_push($params, array("s", $_POST["odate"]));
-		}
-		else {
-			$query = "INSERT INTO vote_option (vote, name) VALUES (?, ?)";
-			$this->regex->isSubject($_POST["name"]);
-			array_push($params, array("s", $_POST["name"]));
-		}
-		return $this->database->prepStatement($query, $params);
+	$query = "INSERT INTO vote_option (vote, name) VALUES (?, ?)";
+	$this->regex->isSubject($_POST["name"]);
+	$params = array(
+		array("i", $vid),
+		array("s", $_POST["name"])
+	);
+	return $this->database->prepStatement($query, $params);
 	}
 	
-	function addOptions($vid, $from, $to) {
-		$options = array();
-		$current = $from;
-		$infPrevention = 0; // max. 1 year, every day
-		while(Data::compareDates($current, $to) < 1 && $infPrevention < 365) {
-			if(strlen($current) <= 10) { // only date, no time
-				$current .= substr($from, 10);
-			}
-			array_push($options, $current);
-			$current = Data::addDaysToDate(substr(Data::convertDateFromDb($current), 0, 10), 1);
-			$infPrevention++;
-		}
-		
-		foreach($options as $option) {
-			$_POST["odate"] = $option;
-			$this->addOption($vid);
-		}
+	// In AbstimmungData:
+	public function countVotesForOption($optionId) {
+	$query = "SELECT COUNT(*) as cnt FROM vote_option_user WHERE vote_option = ?";
+	$result = $this->database->getSelection($query, array(array("i", $optionId)));
+	return isset($result[0]['cnt']) ? (int)$result[0]['cnt'] : 0;
 	}
-	
+
 	function deleteOption($oid) {
-		$query = "DELETE FROM vote_option WHERE id = ?";
-		$this->database->execute($query, array(array("i", $oid)));
-	}
-	
+	$query = "DELETE FROM vote_option WHERE id = ?";
+	$this->database->execute($query, array(array("i", $oid)));
+	}	
+
 	function finish($id) {
 		// do not delete a vote, just set is_finished
 		$query = "UPDATE vote SET is_finished = 1 WHERE id = ?";
 		$this->database->execute($query, array(array("i", $id)));
 	}
-	
+
 	function update($id, $values) {
-		// validation
-		$this->regex->isSubject($values["name"]);
-		$values["end"] = trim($values["end"]);
-		$this->regex->isDateTime($values["end"]);
-		
-		// update db
-		$query = "UPDATE vote SET name = ?, end = ? WHERE id = ?";
-		$params = array(
-			array("s", $values["name"]),
-			array("s", $values["end"]),
-			array("i", $id)
-		);
-		$this->database->execute($query, $params);
+	// validation
+	$this->regex->isSubject($values["name"]);
+	$values["end"] = trim($values["end"]);
+	$this->regex->isDateTime($values["end"]);
+
+	// update db
+	$query = "UPDATE vote SET name = ?, end = ?, is_finished = ? WHERE id = ?";
+	$params = array(
+		array("s", $values["name"]),
+		array("s", $values["end"]),
+		array("i", $values["is_finished"]),
+		array("i", $id)
+	);
+	$this->database->execute($query, $params);
 	}
 	
 	function getGroup($vid) {
@@ -289,8 +267,8 @@ class AbstimmungData extends AbstractData {
 		$contactsInList = $this->database->getSelection($q1);
 		$contactList = $this->database->flattenSelection($contactsInList, "user");
 		$superUsers = $this->getSysdata()->getSuperUsers();
-        
-        // add the user ids to group
+		
+		// add the user ids to group
 		$query = "INSERT INTO vote_group (vote, user) VALUES ";
 		$addset = "";
 		for($i = 1; $i < count($users); $i++) {
@@ -307,6 +285,40 @@ class AbstimmungData extends AbstractData {
 		}
 	}
 	
+	/**
+	* Speichert alle eingeladenen Gruppen zu einer Abstimmung in vote_group_invited.
+	* @param int $voteId Die ID der neuen Abstimmung.	
+	* @param array $groups Array mit Gruppen-IDs, die eingeladen sind.
+	*/
+	function registerInvitedGroups($voteId, $groups) {
+	if(empty($groups) || !is_array($groups)) return;
+	// Bereite Query und Parametern vor (Bulk-Insert möglich)
+	$query = "INSERT INTO vote_group_invited (vote, group_id) VALUES ";
+	$params = array();
+	$values = array();
+
+	foreach($groups as $i => $gid) {
+		$values[] = "(?, ?)";
+		$params[] = array("i", $voteId);
+		$params[] = array("i", $gid);
+	}
+	$query .= implode(",", $values);
+	$this->database->execute($query, $params);
+	}
+	
+	/**
+	 * Liefert die eingeladenen Gruppen (id, name) für eine bestimmte Vote-ID.
+	 * @param int $voteId
+	 * @return array Array mit Schlüsseln id, name (je Gruppe)
+	 */
+	function getInvitedGroupsForVote($voteId) {
+	$query = "SELECT g.id, g.name 
+			  FROM vote_group_invited vgi
+			  JOIN `group` g ON g.id = vgi.group_id
+			  WHERE vgi.vote = ?";
+	return $this->database->getSelection($query, array(array("i", $voteId)));
+	}
+	
 	function deleteFromGroup($vid, $uid) {
 		$query = "DELETE FROM vote_group WHERE vote = $vid AND user = $uid";
 		$this->database->execute($query);
@@ -316,96 +328,36 @@ class AbstimmungData extends AbstractData {
 		$vote = $this->findByIdNoRef($vid);
 		$maybeOn = ($this->getSysdata()->getDynamicConfigParameter("allow_participation_maybe") == 1);
 		
+		// --- ALTE Logik: Deaktiviert, is_date immer 0! ---
+		/*
 		if($vote["is_date"] == 1 && $vote["is_multi"] == 1 && $maybeOn) {
-			/* 
-			 * compile result for date-multi-maybe votes
-			 * 
-			 * target table look:
-			 * OPTION  STIMMEN        WÄHLER
-			 * =================================================
-			 * <Date>  Ja: 4		  Hans, Hektor, Oskar, Heidi
-			 *         Nein: 2        Josef, Viktor
-			 *         Vielleicht: 1  Marta
-			 * -------------------------------------------------
-			 */
-			$result = array();
-			
-			$options = $this->getOptions($vid);			
-			foreach($options as $i => $row) {
-				if($i == 0) {
-					// header
-					array_push($result, array(
-						"id", "Option", "votes", "voters"
-					));
-				}
-				else {
-					// body of result table
-					$optionId = $row["id"];
-					$name = substr(Data::getWeekdayFromDbDate($row["odate"]), 0, 2) . ", ";
-					$name .= Data::convertDateFromDb($row["odate"]) . Lang::txt("AbstimmungData_getResult.odate");
-					
-					$choiceY = $this->getOptionVotes($optionId, 1);
-					$yes = $choiceY["count"];
-					$yesNames = $choiceY["names"];
-					
-					$choiceN = $this->getOptionVotes($optionId, 0);
-					$no = $choiceN["count"];
-					$noNames = $choiceN["names"];
-					
-					$choiceM = $this->getOptionVotes($optionId, 2);
-					$may = $choiceM["count"];
-					$mayNames = $choiceM["names"];
-					
-					
-					// build 3 rows
-					$resRow = array(
-						"id" => $optionId,
-						"Option" => $name,
-						"votes" => 0,
-						"voters" => 0
-					);
-					$resYes = $resRow;
-					$resYes["votes"] = $yes . Lang::txt("AbstimmungData_getResult.yes");
-					$resYes["voters"] = $yesNames;
-					array_push($result, $resYes);
-					
-					$resNo = $resRow;
-					$resNo["votes"] = $no . Lang::txt("AbstimmungData_getResult.no");
-					$resNo["voters"] = $noNames;
-					array_push($result, $resNo);
-					
-					$resMay = $resRow;
-					$resMay["votes"] = $may . Lang::txt("AbstimmungData_getResult.maybe");
-					$resMay["voters"] = $mayNames;
-					array_push($result, $resMay);
-				}
-			}
-			return $result;
+			// ...alter Spezialblock für date-multi-maybe...
 		}
 		else {
+		*/
 			// result for all types of votes, but date-multi-maybe votes
-			$query = 'SELECT vo.id, IF(v.is_date=1, vo.odate, vo.name) as `option`, 
-						       count(vo.id) as votes, 
-						       GROUP_CONCAT(CONCAT(c.name, \' \', c.surname, " (", i.name, ")" ) SEPARATOR \', \') as voters 
+			$query = 'SELECT vo.id, vo.name as `option`, 
+							   count(vo.id) as votes, 
+							   GROUP_CONCAT(CONCAT(c.name, \' \', c.surname, " (", i.name, ")" ) SEPARATOR \', \') as voters 
 						FROM vote v JOIN vote_option vo ON v.id = vo.vote
-						     JOIN vote_option_user vou ON vou.vote_option = vo.id
-						     JOIN user u ON vou.user = u.id
-						     LEFT OUTER JOIN contact c ON u.contact = c.id
-						     LEFT OUTER JOIN instrument i ON c.instrument = i.id
+							 JOIN vote_option_user vou ON vou.vote_option = vo.id
+							 JOIN user u ON vou.user = u.id
+							 LEFT OUTER JOIN contact c ON u.contact = c.id
+							 LEFT OUTER JOIN instrument i ON c.instrument = i.id
 						WHERE v.id = ?
 						GROUP BY vo.id 
 						ORDER BY vo.id';
 			return $this->database->getSelection($query, array(array("i", $vid)));
-		}
-	}
+		//}
+	}	
 	
 	private function getOptionVotes($optionId, $choice) {
 		$result = array( "count" => 0, "names" => "" );
 		
 		$query = 'SELECT CONCAT(c.name, \' \', c.surname, " (", i.name, ")" ) as voter ';
 		$query .= 'FROM vote_option_user vou LEFT OUTER JOIN user u ON vou.user = u.id ';
-		$query .= '     LEFT OUTER JOIN contact c ON u.contact = c.id ';
-		$query .= '     LEFT OUTER JOIN instrument i ON c.instrument = i.id ';
+		$query .= '	 LEFT OUTER JOIN contact c ON u.contact = c.id ';
+		$query .= '	 LEFT OUTER JOIN instrument i ON c.instrument = i.id ';
 		$query .= 'WHERE vou.vote_option = ? AND vou.choice = ? ';
 		$query .= 'ORDER BY voter';
 		
@@ -444,9 +396,9 @@ class AbstimmungData extends AbstractData {
 		// find all contacts that have voted already
 		$alreadyVotedContactsDbSel = $this->database->getSelection("SELECT DISTINCT c.id 
 				FROM vote_option vo JOIN vote_option_user vou ON vo.id = vou.vote_option
-			    JOIN user u ON vou.user = u.id
-			    JOIN contact c ON u.contact = c.id
-			    WHERE vote = 1;"
+				JOIN user u ON vou.user = u.id
+				JOIN contact c ON u.contact = c.id
+				WHERE vote = 1;"
 		);
 		$alreadyVotedContacts = $this->database->flattenSelection($alreadyVotedContactsDbSel, "id");
 		
@@ -459,6 +411,188 @@ class AbstimmungData extends AbstractData {
 		}
 		return $laggards;
 	}
+	
+	public function getVotesWithAuthorName() {
+	$query = "
+		SELECT
+			vote.id,
+			vote.name,
+			vote.end,
+			vote.is_multi,
+			vote.is_date,
+			vote.is_finished,
+			concat(contact.name, ' ',contact.surname) AS author_name
+		FROM vote			
+		join user on user.id = vote.author
+		JOIN contact on contact.id = user.contact
+		ORDER BY vote.end ASC
+	";
+	return $this->database->getSelection($query);
+	}
+	
+	public function getVoteWithAuthorName($id) {
+	$query = "
+		SELECT
+			vote.id,
+			vote.name,
+			vote.end,
+			vote.is_multi,
+			vote.is_date,
+			vote.is_finished,
+			concat(contact.name, ' ',contact.surname) AS author_name
+		FROM
+			vote
+	  	join user on user.id = vote.author
+		JOIN contact on contact.id = user.contact
+		WHERE
+			vote.id = ?
+		LIMIT 1
+	";
+	$result = $this->database->getSelection($query, array(array("i", $id)));
+	return isset($result[1]) ? $result[1] : $result[0];
+	}
+	
+	public function getOpenVotesWithAuthorName() {
+	$query = "
+		SELECT
+			vote.id,
+			vote.name,
+			vote.end,
+			vote.is_multi,
+			vote.is_date,
+			'Nein' AS is_finished,
+			concat(contact.name, ' ',contact.surname) AS author_name
+		FROM vote			
+		join user on user.id = vote.author
+		JOIN contact on contact.id = user.contact
+		WHERE
+			vote.is_finished = 0
+		ORDER BY vote.end ASC
+	";
+	return $this->database->getSelection($query);
+	}
+
+	public function getClosedVotesWithAuthorName() {
+	$query = "
+		SELECT
+			vote.id,
+			vote.name,
+			vote.end,
+			vote.is_multi,
+			vote.is_date,
+			'Ja' AS is_finished,
+		   concat(contact.name, ' ',contact.surname) AS author_name
+		FROM vote			
+		join user on user.id = vote.author
+		JOIN contact on contact.id = user.contact
+		WHERE
+			vote.is_finished = 1
+		ORDER BY vote.end ASC
+	";
+	return $this->database->getSelection($query);
+	}
+
+	public function reopenVote($id) {
+	$query = "UPDATE vote SET is_finished = 0 WHERE id = ?";
+	$this->database->execute($query, array(array("i", $id)));
+	}
+	
+	/**
+	 * Löscht eine Umfrage inkl. aller zugehörigen Optionen
+	 *
+	 * @param int $id Die ID der zu löschenden Umfrage.
+	 */
+	function deleteVote($id) {
+	// 1) Alle Stimmen zu den Optionen der Umfrage löschen
+	$sql1 = "
+		DELETE vou
+		FROM vote_option_user AS vou
+		INNER JOIN vote_option AS vo
+		  ON vo.id = vou.vote_option
+		WHERE vo.vote = ?
+	";
+	$this->database->execute($sql1, array(array("i", $id)));
+
+	// 2) Alle Optionen der Umfrage löschen
+	$sql2 = "DELETE FROM vote_option WHERE vote = ?";
+	$this->database->execute($sql2, array(array("i", $id)));
+
+	// 3) Die Umfrage selbst löschen
+	$sql3 = "DELETE FROM vote WHERE id = ?";
+	$this->database->execute($sql3, array(array("i", $id)));
+	}
+
+	/**
+	 * Neue ergebnisdarstellung: Gibt den Namen der Abstimmung für die angegebene vote_id zurück.
+	 */
+	public function getVoteName($vote_id) {
+	$query = "SELECT name FROM vote WHERE id = ?";
+	$result = $this->database->getSelection($query, array(array("i", $vote_id)));
+	if (isset($result[1]['name'])) return $result[1]['name'];
+	return null;
+	}
+
+	public function getInvitedUserCount($vote_id) {
+	$query = "SELECT COUNT(*) AS cnt FROM vote_group WHERE vote = ?";
+	$result = $this->database->getSelection($query, array(array("i", $vote_id)));
+	if (isset($result[1]['cnt'])) return (int)$result[1]['cnt'];
+	return 0;
+	}
+
+	public function getParticipantsCount($vote_id) {
+	$query = "
+		SELECT COUNT(DISTINCT vou.user) AS cnt
+		FROM vote_option_user vou
+		INNER JOIN vote_option vo ON vou.vote_option = vo.id
+		WHERE vo.vote = ?";
+	$result = $this->database->getSelection($query, array(array("i", $vote_id)));
+	if (isset($result[1]['cnt'])) return (int)$result[1]['cnt'];
+	return 0;
+	}
+
+	public function getOptionResults($vote_id) {
+	$query = "
+		SELECT vo.id, vo.name, COUNT(vou.user) AS votes
+		FROM vote_option vo
+		LEFT JOIN vote_option_user vou ON vo.id = vou.vote_option
+		WHERE vo.vote = ?
+		GROUP BY vo.id, vo.name
+		ORDER BY votes DESC, vo.id";
+	$result = $this->database->getSelection($query, array(array("i", $vote_id)));
+	// Gib nur das Array ab Index 1 zurück (echte Daten)
+	return array_slice($result, 1);
+	}
+
+	
+	public function getRohErgebnisliste($voteId) {
+	$sql = "SELECT * FROM umfragenresult_bnote WHERE vote = ? AND NOT VOTUM = 'Kein Votum' ORDER BY name";
+	$rows = $this->database->getSelection($sql, [ [ "i", $voteId ] ]);
+
+	foreach ($rows as &$row) {
+		if (isset($row["NACHRICHT"])) {
+			$row["NACHRICHT"] = urldecode($row["NACHRICHT"]);
+		}
+		if (isset($row["VOTUM"])) {
+			$row["VOTUM"] = (int)$row["VOTUM"];  //wichtig: Umkodierung funktioniert nur bei Integer!
+		}
+	}
+
+	return $rows;
+	}
+
+	public function getRohErgebnislisteNoVote($voteId) {
+	$sql = "SELECT * FROM umfragenresult_bnote WHERE vote = ? AND VOTUM = 'Kein Votum' ORDER BY name";
+	$rows = $this->database->getSelection($sql, [ [ "i", $voteId ] ]);
+
+	foreach ($rows as &$row) {
+		if (isset($row["NACHRICHT"])) {
+			$row["NACHRICHT"] = urldecode($row["NACHRICHT"]);
+		}
+	}
+
+	return $rows;
+	}
+
 }
 
 ?>
